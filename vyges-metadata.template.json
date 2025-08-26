@@ -1,0 +1,332 @@
+{
+  "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
+  "x-version": "1.0.0",
+  "name": "example.com/example-core",
+  "version": "1.0.0",
+  "description": "Generic IP module template demonstrating Vyges IP development standards and best practices. Replace with your actual IP functionality.",
+  "license": "Apache-2.0",
+  "template": "vyges-ip-template@1.0.0",
+  "target": ["asic", "fpga"],
+  "design_type": ["digital"],
+  "maturity": "prototype",
+  "created": "2025-08-15T00:00:00Z",
+  "updated": "2025-08-15T00:00:00Z",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/example.com/example-ip-repo",
+    "commit": "main",
+    "private": false,
+    "containsEncryptedPayload": false,
+    "indexing": true
+  },
+  "sourceFiles": [
+    {
+      "path": "rtl/example_core.sv",
+      "type": "rtl",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example",
+      "vendor": {
+        "name": "Example.com Inc.",
+        "docs": [
+          {
+            "title": "Example Core Documentation",
+            "url": "https://example.com/docs/example-core",
+            "type": "user_guide"
+          }
+        ],
+        "contact": {
+          "email": "team@example.com",
+          "url": "https://example.com/support"
+        }
+      }
+    },
+    {
+      "path": "tb/sv_tb/tb_example.sv",
+      "type": "testbench",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    },
+    {
+      "path": "integration/example_wrapper.v",
+      "type": "rtl",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    },
+    {
+      "path": "constraints/constraints.sdc",
+      "type": "constraint",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    },
+    {
+      "path": "constraints/constraints.xdc",
+      "type": "constraint",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    },
+    {
+      "path": "docs/example-architecture.md",
+      "type": "documentation",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    },
+    {
+      "path": "docs/example-design_spec.md",
+      "type": "documentation",
+      "owner": "Example Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "example"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Example Team",
+      "email": "team@example.com",
+      "github": "example-org"
+    }
+  ],
+  "branding": {
+    "provider": "Example.com Inc.",
+    "logo": "https://example.com/assets/logo.svg",
+    "website": "https://example.com/ip/example-core",
+    "usage": "Use of the logo is permitted for attribution or compatibility references only."
+  },
+  "interfaces": [
+    {
+      "type": "clock",
+      "direction": "input",
+      "protocol": "Single-ended",
+      "signals": [
+        { "name": "clk_i", "direction": "input", "width": 1, "description": "System clock input" }
+      ]
+    },
+    {
+      "type": "reset",
+      "direction": "input",
+      "protocol": "Active-low",
+      "signals": [
+        { "name": "reset_n_i", "direction": "input", "width": 1, "description": "Active-low reset signal" }
+      ]
+    },
+    {
+      "type": "control",
+      "direction": "input",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "enable_i", "direction": "input", "width": 1, "description": "Module enable signal" },
+        { "name": "start_i", "direction": "input", "width": 1, "description": "Start operation signal" },
+        { "name": "clear_i", "direction": "input", "width": 1, "description": "Clear/reset operation signal" }
+      ]
+    },
+    {
+      "type": "control",
+      "direction": "output",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "busy_o", "direction": "output", "width": 1, "description": "Module busy flag" },
+        { "name": "done_o", "direction": "output", "width": 1, "description": "Operation complete flag" },
+        { "name": "error_o", "direction": "output", "width": 1, "description": "Error flag" }
+      ]
+    },
+    {
+      "type": "data",
+      "direction": "input",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "data_in_i", "direction": "input", "width": 32, "description": "Input data" },
+        { "name": "valid_in_i", "direction": "input", "width": 1, "description": "Input data valid flag" }
+      ]
+    },
+    {
+      "type": "data",
+      "direction": "output",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "data_out_o", "direction": "output", "width": 32, "description": "Output data" },
+        { "name": "valid_out_o", "direction": "output", "width": 1, "description": "Output data valid flag" }
+      ]
+    },
+    {
+      "type": "handshake",
+      "direction": "input",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "ready_out_i", "direction": "input", "width": 1, "description": "Downstream ready signal" }
+      ]
+    },
+    {
+      "type": "handshake",
+      "direction": "output",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "ready_in_o", "direction": "output", "width": 1, "description": "Ready for input data signal" }
+      ]
+    },
+    {
+      "type": "configuration",
+      "direction": "input",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "config_addr_i", "direction": "input", "width": 8, "description": "Configuration address" },
+        { "name": "config_data_i", "direction": "input", "width": 32, "description": "Configuration data" },
+        { "name": "config_valid_i", "direction": "input", "width": 1, "description": "Configuration valid flag" }
+      ]
+    },
+    {
+      "type": "configuration",
+      "direction": "output",
+      "protocol": "Standard",
+      "signals": [
+        { "name": "config_ready_o", "direction": "output", "width": 1, "description": "Configuration ready signal" },
+        { "name": "status_o", "direction": "output", "width": 32, "description": "Status information" }
+      ]
+    }
+  ],
+  "parameters": [
+    {
+      "name": "DATA_WIDTH",
+      "type": "int",
+      "default": 32,
+      "description": "Width of data input and output",
+      "range": { "min": 8, "max": 64 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "ADDR_WIDTH",
+      "type": "int",
+      "default": 8,
+      "description": "Width of configuration address",
+      "range": { "min": 4, "max": 16 },
+      "units": "bits",
+      "required": false
+    },
+    {
+      "name": "BUFFER_DEPTH",
+      "type": "int",
+      "default": 16,
+      "description": "Depth of internal data buffer",
+      "range": { "min": 4, "max": 256 },
+      "units": "entries",
+      "required": false
+    }
+  ],
+  "test": {
+    "coverage": true,
+    "testbenches": ["systemverilog"],
+    "simulators": ["verilator", "iverilog"],
+    "status": "passing",
+    "systemverilog_integration": {
+      "status": "verified",
+      "version": "IEEE 1800-2017",
+      "simulators": ["icarus", "verilator"],
+      "makefile_approach": "standard",
+      "fallback_support": true
+    }
+  },
+  "flows": {
+    "verilator": {
+      "status": "verified",
+      "systemverilog_integration": "working"
+    },
+    "icarus": {
+      "status": "verified",
+      "systemverilog_integration": "working"
+    },
+    "openlane": {
+      "pdks": ["sky130B"],
+      "status": "template"
+    },
+    "vivado": {
+      "status": "template"
+    }
+  },
+  "asic": {
+    "flavor": "digital",
+    "pdks": ["sky130B"],
+    "synthesis_tool": "openlane",
+    "clock_freq_mhz": 100,
+    "constraints": ["constraints.sdc"],
+    "tools": ["yosys", "openroad"]
+  },
+  "fpga": {
+    "toolchain": "vivado",
+    "board": "arty-a7-35",
+    "cfu_playground_compatible": true,
+    "constraints": ["constraints.xdc"]
+  },
+  "integration": {
+    "examples": [
+      {
+        "target": "simulation",
+        "wrapper": "integration/example_wrapper.v",
+        "tb": "tb/sv_tb/tb_example.sv"
+      },
+      {
+        "target": "rtl",
+        "module": "rtl/example_core.sv",
+        "description": "Generic template module with configurable data processing"
+      }
+    ],
+    "dependencies": [],
+    "toolRequirements": {
+      "synthesis": ["yosys", "openroad"],
+      "simulation": ["verilator", "icarus"],
+      "verification": ["systemverilog"]
+    }
+  },
+  "automation": {
+    "automation_level": "enhanced",
+    "ci_cd": {
+      "github_actions": true,
+      "automated_testing": true,
+      "automated_building": true
+    },
+    "code_quality": {
+      "linting": true,
+      "formatting": true,
+      "coverage": true
+    }
+  },
+  "categories": {
+    "primary": "template",
+    "secondary": ["digital", "configurable"],
+    "tags": ["example", "template", "systemverilog", "rtl", "verification", "synthesis", "openlane", "yosys"]
+  },
+  "community": {
+    "issues": "https://github.com/example.com/example-ip-repo/issues",
+    "contributions": true,
+    "chat": "https://discord.gg/example"
+  },
+  "performance": {
+    "clock_frequency": {
+      "value": 100,
+      "unit": "MHz",
+      "description": "Maximum operating frequency"
+    },
+    "area": {
+      "value": 1000,
+      "unit": "um²",
+      "description": "Estimated silicon area"
+    },
+    "power": {
+      "value": 5,
+      "unit": "mW",
+      "description": "Typical power consumption"
+    }
+  }
+}
+  
