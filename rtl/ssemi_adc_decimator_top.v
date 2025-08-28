@@ -89,8 +89,9 @@ module ssemi_adc_decimator_top #(
     } top_error_type_e;
 
     //==============================================================================
-    // Parameter Validation with Detailed Error Messages
+    // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
+`ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (CIC_STAGES < 1 || CIC_STAGES > 8) begin
@@ -119,6 +120,7 @@ module ssemi_adc_decimator_top #(
         $info("SSEMI_ADC_DECIMATOR_TOP: Configuration - CIC Stages: %d, FIR Taps: %d, Halfband Taps: %d, Decimation: %d",
               CIC_STAGES, FIR_TAPS, HALFBAND_TAPS, DECIMATION_FACTOR);
     end
+`endif
 
     //==============================================================================
     // Internal Signals and Connections

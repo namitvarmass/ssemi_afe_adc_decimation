@@ -91,7 +91,8 @@ module ssemi_config_status_regs #(
     logic invalid_addr;
     logic coeff_range_error;
     
-    // Parameter validation
+    // Parameter validation (verification only)
+`ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (FIR_TAPS < 4 || FIR_TAPS > 256) begin
@@ -116,6 +117,7 @@ module ssemi_config_status_regs #(
                      HALFBAND_TAPS, `SSEMI_HALFBAND_TAPS);
         end
     end
+`endif
 
     //==============================================================================
     // Configuration Register Management

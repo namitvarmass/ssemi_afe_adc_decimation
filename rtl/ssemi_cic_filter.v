@@ -71,8 +71,9 @@ module ssemi_cic_filter #(
     } cic_error_type_e;
 
     //==============================================================================
-    // Parameter Validation with Detailed Error Messages
+    // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
+`ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (CIC_STAGES < 1 || CIC_STAGES > 8) begin
@@ -108,6 +109,7 @@ module ssemi_cic_filter #(
         $info("SSEMI_CIC_FILTER: Configuration - Stages: %d, Delay: %d, Decimation: %d, Input: %d-bit, Output: %d-bit",
               CIC_STAGES, DIFFERENTIAL_DELAY, DECIMATION_FACTOR, INPUT_DATA_WIDTH, OUTPUT_DATA_WIDTH);
     end
+`endif
 
     //==============================================================================
     // Internal Signals and Registers

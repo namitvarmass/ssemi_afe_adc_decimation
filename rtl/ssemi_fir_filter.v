@@ -82,8 +82,9 @@ module ssemi_fir_filter #(
     } fir_error_type_e;
 
     //==============================================================================
-    // Parameter Validation with Detailed Error Messages
+    // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
+`ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (NUM_TAPS < 4 || NUM_TAPS > 256) begin
@@ -116,6 +117,7 @@ module ssemi_fir_filter #(
         $info("SSEMI_FIR_FILTER: Configuration - Taps: %d, Coeff Width: %d, Input: %d-bit, Output: %d-bit",
               NUM_TAPS, COEFF_WIDTH, INPUT_DATA_WIDTH, OUTPUT_DATA_WIDTH);
     end
+`endif
 
     //==============================================================================
     // Internal Signals and Registers

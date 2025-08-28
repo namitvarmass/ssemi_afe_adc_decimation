@@ -82,8 +82,9 @@ module ssemi_halfband_filter #(
     } halfband_error_type_e;
 
     //==============================================================================
-    // Parameter Validation with Detailed Error Messages
+    // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
+`ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (NUM_TAPS < 5 || NUM_TAPS > 128) begin
@@ -120,6 +121,7 @@ module ssemi_halfband_filter #(
         $info("SSEMI_HALFBAND_FILTER: Configuration - Taps: %d, Coeff Width: %d, Input: %d-bit, Output: %d-bit",
               NUM_TAPS, COEFF_WIDTH, INPUT_DATA_WIDTH, OUTPUT_DATA_WIDTH);
     end
+`endif
 
     //==============================================================================
     // Internal Signals and Registers
