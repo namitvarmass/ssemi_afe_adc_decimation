@@ -71,6 +71,64 @@ module tb_ssemi_adc_decimator_top;
     logic [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] test_halfband_coeff [0:HALFBAND_TAPS-1];
 
     //==============================================================================
+    // Coverage Collection
+    //==============================================================================
+    // Functional coverage bins
+    covergroup input_data_cg @(posedge i_clk);
+        input_range: coverpoint i_data {
+            bins zero = {0};
+            bins positive = {[1:32767]};
+            bins negative = {[-32768:-1]};
+            bins max_positive = {32767};
+            bins max_negative = {-32768};
+        }
+        
+        valid_ready: coverpoint {i_valid, o_ready} {
+            bins idle = {2'b00};
+            bins waiting = {2'b01};
+            bins sending = {2'b10};
+            bins transfer = {2'b11};
+        }
+        
+        error_types: coverpoint o_error_type {
+            bins no_error = {3'b000};
+            bins overflow = {3'b001};
+            bins underflow = {3'b010};
+            bins invalid_config = {3'b011};
+            bins stage_failure = {3'b100};
+        }
+        
+        status_bits: coverpoint o_status {
+            bins cic_active = {[8]};
+            bins fir_active = {[7]};
+            bins halfband_active = {[6]};
+            bins error_flag = {[4]};
+            bins overflow_detected = {[3]};
+            bins underflow_detected = {[2]};
+        }
+    endgroup
+
+    // Configuration coverage
+    covergroup config_cg @(posedge i_clk);
+        config_addr: coverpoint i_config_addr {
+            bins fir_coeff = {[0:63]};
+            bins halfband_coeff = {[64:96]};
+            bins reserved = {[97:255]};
+        }
+        
+        config_valid: coverpoint {i_config_valid, o_config_ready} {
+            bins idle = {2'b00};
+            bins ready = {2'b01};
+            bins valid = {2'b10};
+            bins transfer = {2'b11};
+        }
+    endgroup
+
+    // Coverage instances
+    input_data_cg input_cov;
+    config_cg config_cov;
+
+    //==============================================================================
     // DUT Instance
     //==============================================================================
     ssemi_adc_decimator_top #(
@@ -106,6 +164,14 @@ module tb_ssemi_adc_decimator_top;
     initial begin
         i_clk = 0;
         forever #(CLK_PERIOD/2) i_clk = ~i_clk;
+    end
+
+    //==============================================================================
+    // Coverage Initialization
+    //==============================================================================
+    initial begin
+        input_cov = new();
+        config_cov = new();
     end
 
     //==============================================================================
@@ -171,6 +237,24 @@ module tb_ssemi_adc_decimator_top;
         $display("Successful: %d", success_count);
         $display("Errors: %d", error_count);
         $display("Success Rate: %.2f%%", (success_count * 100.0) / test_count);
+        
+        // Display coverage results
+        $display("=== Coverage Results ===");
+        $display("Input Data Coverage: %.2f%%", input_cov.get_inst_coverage());
+        $display("Configuration Coverage: %.2f%%", config_cov.get_inst_coverage());
+        
+        // Coverage goals check
+        if (input_cov.get_inst_coverage() >= 95.0) begin
+            $display("✓ Input Data Coverage Goal Met (95%%)");
+        end else begin
+            $display("✗ Input Data Coverage Goal Not Met (%.2f%% < 95%%)", input_cov.get_inst_coverage());
+        end
+        
+        if (config_cov.get_inst_coverage() >= 90.0) begin
+            $display("✓ Configuration Coverage Goal Met (90%%)");
+        end else begin
+            $display("✗ Configuration Coverage Goal Not Met (%.2f%% < 90%%)", config_cov.get_inst_coverage());
+        end
         
         // End simulation
         #(CLK_PERIOD * 100);

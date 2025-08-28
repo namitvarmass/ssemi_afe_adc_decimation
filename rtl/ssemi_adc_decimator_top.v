@@ -19,74 +19,62 @@
 `include "ssemi_defines.vh"
 
 module ssemi_adc_decimator_top #(
-    parameter int CIC_STAGES = `SSEMI_CIC_STAGES,
-    parameter int FIR_TAPS = `SSEMI_FIR_TAPS,
-    parameter int HALFBAND_TAPS = `SSEMI_HALFBAND_TAPS,
-    parameter int DECIMATION_FACTOR = `SSEMI_DEFAULT_DECIMATION_FACTOR
+    parameter CIC_STAGES = `SSEMI_CIC_STAGES,
+    parameter FIR_TAPS = `SSEMI_FIR_TAPS,
+    parameter HALFBAND_TAPS = `SSEMI_HALFBAND_TAPS,
+    parameter DECIMATION_FACTOR = `SSEMI_DEFAULT_DECIMATION_FACTOR
 ) (
     //==============================================================================
     // Clock and Reset Interface
     //==============================================================================
-    input  logic i_clk,           // Input clock (100MHz typical)
-    input  logic i_rst_n,         // Active-low asynchronous reset
+    input  wire i_clk,           // Input clock (100MHz typical)
+    input  wire i_rst_n,         // Active-low asynchronous reset
     
     //==============================================================================
     // Control Interface
     //==============================================================================
-    input  logic i_enable,        // Enable decimator operation
-    input  logic i_valid,         // Input data valid signal
-    output logic o_ready,         // Ready to accept input data
+    input  wire i_enable,        // Enable decimator operation
+    input  wire i_valid,         // Input data valid signal
+    output reg  o_ready,         // Ready to accept input data
     
     //==============================================================================
     // Data Interface
     //==============================================================================
-    input  logic [`SSEMI_INPUT_DATA_WIDTH-1:0] i_data,   // Input data (16-bit signed)
-    output logic [`SSEMI_OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (24-bit signed)
-    output logic o_valid,         // Output data valid signal
+    input  wire [`SSEMI_INPUT_DATA_WIDTH-1:0] i_data,   // Input data (16-bit signed)
+    output reg  [`SSEMI_OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (24-bit signed)
+    output reg  o_valid,         // Output data valid signal
     
     //==============================================================================
     // Configuration Interface
     //==============================================================================
-    input  logic i_config_valid,  // Configuration data valid
-    input  logic [7:0] i_config_addr,  // Configuration address
-    input  logic [31:0] i_config_data, // Configuration data
-    output logic o_config_ready,  // Configuration ready
+    input  wire i_config_valid,  // Configuration data valid
+    input  wire [7:0] i_config_addr,  // Configuration address
+    input  wire [31:0] i_config_data, // Configuration data
+    output reg  o_config_ready,  // Configuration ready
     
     //==============================================================================
     // Status and Error Interface
     //==============================================================================
-    output logic [7:0] o_status,              // Status information
-    output logic o_busy,                      // Decimator busy
-    output logic o_error,                     // Error flag
-    output logic [2:0] o_error_type,          // Specific error type
-    output logic [3:0] o_cic_stage_status,    // CIC stage status
-    output logic [5:0] o_fir_tap_status,      // FIR tap status
-    output logic [4:0] o_halfband_tap_status  // Halfband tap status
+    output reg  [7:0] o_status,              // Status information
+    output reg  o_busy,                      // Decimator busy
+    output reg  o_error,                     // Error flag
+    output reg  [2:0] o_error_type,          // Specific error type
+    output reg  [3:0] o_cic_stage_status,    // CIC stage status
+    output reg  [5:0] o_fir_tap_status,      // FIR tap status
+    output reg  [4:0] o_halfband_tap_status  // Halfband tap status
 );
 
     //==============================================================================
-    // Type Definitions for Better Type Safety
+    // Error Type Constants (replacing enum)
     //==============================================================================
-    typedef logic [`SSEMI_INPUT_DATA_WIDTH-1:0] ssemi_input_data_t;
-    typedef logic [`SSEMI_OUTPUT_DATA_WIDTH-1:0] ssemi_output_data_t;
-    typedef logic [`SSEMI_CIC_DATA_WIDTH-1:0] ssemi_cic_data_t;
-    typedef logic [`SSEMI_FIR_DATA_WIDTH-1:0] ssemi_fir_data_t;
-    typedef logic [`SSEMI_FIR_COEFF_WIDTH-1:0] ssemi_fir_coeff_t;
-    typedef logic [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] ssemi_halfband_coeff_t;
-    typedef logic [7:0] ssemi_status_t;
-    typedef logic [2:0] ssemi_error_type_t;
-    
-    // Error type enumeration
-    typedef enum logic [2:0] {
-        TOP_ERROR_NONE = 3'b000,
-        TOP_ERROR_OVERFLOW = 3'b001,
-        TOP_ERROR_UNDERFLOW = 3'b010,
-        TOP_ERROR_INVALID_CONFIG = 3'b011,
-        TOP_ERROR_STAGE_FAILURE = 3'b100,
-        TOP_ERROR_RESERVED1 = 3'b101,
-        TOP_ERROR_RESERVED2 = 3'b110,
-        TOP_ERROR_RESERVED3 = 3'b111
-    } top_error_type_e;
+    parameter SSEMI_TOP_ERROR_NONE = 3'b000;
+    parameter SSEMI_TOP_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_TOP_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_TOP_ERROR_INVALID_CONFIG = 3'b011;
+    parameter SSEMI_TOP_ERROR_STAGE_FAILURE = 3'b100;
+    parameter SSEMI_TOP_ERROR_RESERVED1 = 3'b101;
+    parameter SSEMI_TOP_ERROR_RESERVED2 = 3'b110;
+    parameter SSEMI_TOP_ERROR_RESERVED3 = 3'b111;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
@@ -116,9 +104,20 @@ module ssemi_adc_decimator_top #(
                    `SSEMI_MIN_DECIMATION_FACTOR, `SSEMI_MAX_DECIMATION_FACTOR, DECIMATION_FACTOR);
         end
         
-        // Display configuration summary
-        $info("SSEMI_ADC_DECIMATOR_TOP: Configuration - CIC Stages: %d, FIR Taps: %d, Halfband Taps: %d, Decimation: %d",
-              CIC_STAGES, FIR_TAPS, HALFBAND_TAPS, DECIMATION_FACTOR);
+        if (CIC_STAGES != `SSEMI_CIC_STAGES) begin
+            $warning("SSEMI_ADC_DECIMATOR_TOP: CIC_STAGES parameter (%d) differs from define (%d)", 
+                     CIC_STAGES, `SSEMI_CIC_STAGES);
+        end
+        
+        if (FIR_TAPS != `SSEMI_FIR_TAPS) begin
+            $warning("SSEMI_ADC_DECIMATOR_TOP: FIR_TAPS parameter (%d) differs from define (%d)", 
+                     FIR_TAPS, `SSEMI_FIR_TAPS);
+        end
+        
+        if (HALFBAND_TAPS != `SSEMI_HALFBAND_TAPS) begin
+            $warning("SSEMI_ADC_DECIMATOR_TOP: HALFBAND_TAPS parameter (%d) differs from define (%d)", 
+                     HALFBAND_TAPS, `SSEMI_HALFBAND_TAPS);
+        end
     end
 `endif
 
@@ -127,43 +126,43 @@ module ssemi_adc_decimator_top #(
     //==============================================================================
     
     // Clock divider signals
-    logic cic_clk;
-    logic fir_clk;
-    logic halfband_clk;
+    wire cic_clk;
+    wire fir_clk;
+    wire halfband_clk;
     
     // CIC filter signals
-    ssemi_cic_data_t cic_output_data;
-    logic cic_output_valid;
-    logic cic_overflow;
-    logic cic_underflow;
-    logic cic_busy;
+    wire [`SSEMI_CIC_DATA_WIDTH-1:0] cic_output_data;
+    wire cic_output_valid;
+    wire cic_overflow;
+    wire cic_underflow;
+    wire cic_busy;
     
     // FIR filter signals
-    ssemi_fir_data_t fir_output_data;
-    logic fir_output_valid;
-    logic fir_overflow;
-    logic fir_underflow;
-    logic fir_busy;
-    ssemi_fir_coeff_t fir_coefficients [0:FIR_TAPS-1];
+    wire [`SSEMI_FIR_DATA_WIDTH-1:0] fir_output_data;
+    wire fir_output_valid;
+    wire fir_overflow;
+    wire fir_underflow;
+    wire fir_busy;
+    wire [`SSEMI_FIR_COEFF_WIDTH-1:0] fir_coefficients [0:FIR_TAPS-1];
     
     // Halfband filter signals
-    ssemi_output_data_t halfband_output_data;
-    logic halfband_output_valid;
-    logic halfband_overflow;
-    logic halfband_underflow;
-    logic halfband_busy;
-    ssemi_halfband_coeff_t halfband_coefficients [0:HALFBAND_TAPS-1];
+    wire [`SSEMI_OUTPUT_DATA_WIDTH-1:0] halfband_output_data;
+    wire halfband_output_valid;
+    wire halfband_overflow;
+    wire halfband_underflow;
+    wire halfband_busy;
+    wire [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] halfband_coefficients [0:HALFBAND_TAPS-1];
     
     // Configuration and status signals
-    ssemi_status_t status_reg;
-    logic busy_reg;
-    logic error_reg;
-    ssemi_error_type_t error_type_reg;
+    wire [7:0] status_reg;
+    wire busy_reg;
+    wire error_reg;
+    wire [2:0] error_type_reg;
     
     // Error aggregation
-    logic any_overflow;
-    logic any_underflow;
-    logic any_stage_failure;
+    wire any_overflow;
+    wire any_underflow;
+    wire any_stage_failure;
 
     //==============================================================================
     // Clock Divider Instances
@@ -320,17 +319,17 @@ module ssemi_adc_decimator_top #(
     assign any_stage_failure = cic_busy && fir_busy && halfband_busy;
     
     // Error type determination
-    always_comb begin
+    always @(*) begin
         if (any_overflow) begin
-            error_type_reg = TOP_ERROR_OVERFLOW;
+            error_type_reg = SSEMI_TOP_ERROR_OVERFLOW;
         end else if (any_underflow) begin
-            error_type_reg = TOP_ERROR_UNDERFLOW;
+            error_type_reg = SSEMI_TOP_ERROR_UNDERFLOW;
         end else if (error_reg) begin
-            error_type_reg = TOP_ERROR_INVALID_CONFIG;
+            error_type_reg = SSEMI_TOP_ERROR_INVALID_CONFIG;
         end else if (any_stage_failure) begin
-            error_type_reg = TOP_ERROR_STAGE_FAILURE;
+            error_type_reg = SSEMI_TOP_ERROR_STAGE_FAILURE;
         end else begin
-            error_type_reg = TOP_ERROR_NONE;
+            error_type_reg = SSEMI_TOP_ERROR_NONE;
         end
     end
 

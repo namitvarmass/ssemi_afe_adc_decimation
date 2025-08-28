@@ -1,20 +1,100 @@
-# Example IP - Architecture Specification
+# SSEMI ADC Decimator Architecture
 
 ## Overview
 
-This document describes the architecture of the Example IP block, which serves as a template for developing new IP cores following Vyges standards and best practices. The example demonstrates a generic, configurable data processing module that can be customized for specific IP implementations.
-
-## Block Information
-
-- **Block Name**: `example`
-- **Module Name**: `core`
-- **Version**: 1.0.0
-- **License**: Apache-2.0
+The SSEMI ADC Decimator is a high-performance multi-stage digital filter designed for analog front-end applications. It implements a three-stage decimation architecture optimized for oversampled ADC data with configurable decimation factors from 32 to 512.
 
 ## Architecture Overview
 
-The `example` IP block implements a generic, configurable data processing module that demonstrates:
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SSEMI ADC Decimator                          │
+│                                                                 │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐ │
+│  │   CIC       │    │    FIR      │    │    Halfband         │ │
+│  │  Filter     │───▶│   Filter    │───▶│     Filter          │ │
+│  │ (Coarse)    │    │(Compensation)│    │   (Final 2:1)       │ │
+│  └─────────────┘    └─────────────┘    └─────────────────────┘ │
+│         │                   │                       │           │
+│         ▼                   ▼                       ▼           │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────────────┐ │
+│  │   Clock     │    │   Clock     │    │      Clock          │ │
+│  │  Divider    │    │  Divider    │    │     Divider         │ │
+│  └─────────────┘    └─────────────┘    └─────────────────────┘ │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │              Configuration & Status Registers               │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────┘
+```
 
+## Design Stages
+
+### 1. CIC Filter (Cascaded Integrator-Comb)
+
+**Purpose**: Coarse decimation with minimal resource usage
+- **Decimation Factor**: Configurable (32-512)
+- **Stages**: 1-8 configurable stages
+- **Differential Delay**: 1-4 configurable
+- **Data Width**: 16-bit input, 32-bit internal, 24-bit output
+
+**Key Features**:
+- Efficient implementation with minimal multipliers
+- Built-in overflow/underflow detection
+- Saturation logic for overflow protection
+- Configurable number of stages for trade-off between performance and resources
+
+### 2. FIR Filter
+
+**Purpose**: Passband compensation and stopband attenuation
+- **Taps**: 4-256 configurable taps
+- **Coefficient Width**: 8-24 bits configurable
+- **Data Width**: 32-bit input, 24-bit output
+
+**Key Features**:
+- Symmetric FIR implementation for efficiency
+- Coefficient update capability
+- Overflow/underflow detection per tap
+- Optimized for 20kHz passband with <0.01dB ripple
+
+### 3. Halfband Filter
+
+**Purpose**: Final 2:1 decimation with optimized coefficients
+- **Taps**: 5-128 taps (must be odd)
+- **Coefficient Width**: 8-24 bits configurable
+- **Data Width**: 24-bit input/output
+
+**Key Features**:
+- Zero-valued odd taps for efficiency
+- Optimized for >100dB stopband attenuation
+- 2:1 decimation ratio
+- Symmetric coefficient structure
+
+## Clock Domain Management
+
+The design uses a single clock domain with internal clock dividers for each stage:
+
+- **Main Clock**: 100MHz typical
+- **CIC Clock**: Divided by decimation factor
+- **FIR Clock**: Same as CIC output rate
+- **Halfband Clock**: Half of FIR clock rate
+
+## Configuration Interface
+
+The decimator provides a comprehensive configuration interface:
+
+- **Address Space**: 8-bit address (256 locations)
+- **Data Width**: 32-bit configuration data
+- **Coefficient Storage**: Default coefficients loaded on reset
+- **Runtime Updates**: Coefficient updates supported during operation
+
+## Error Detection and Reporting
+
+### Error Types
+1. **Overflow**: Data exceeds maximum representable value
+2. **Underflow**: Data below minimum representable value
+3. **Invalid Configuration**: Configuration address out of range
+4. **Coefficient Range**: Coefficient values exceed valid range
 - **Parameterized Design**: Configurable data width, address width, and buffer depth
 - **State Machine**: Well-defined operational states with clear transitions
 - **Data Buffering**: FIFO-based data storage with overflow protection

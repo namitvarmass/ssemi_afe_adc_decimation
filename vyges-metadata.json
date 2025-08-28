@@ -1,0 +1,321 @@
+{
+  "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
+  "x-version": "1.0.0",
+  "name": "ssemi/afe-adc-decimation",
+  "version": "1.0.0",
+  "description": "Multi-stage ADC decimator with CIC, FIR, and halfband filters for high-performance analog front-end applications. Supports decimation factors from 32 to 512 with configurable filter stages optimized for 20kHz passband and >100dB stopband attenuation.",
+  "license": "Apache-2.0",
+  "template": "vyges-ip-template@1.0.0",
+  "target": ["asic", "fpga"],
+  "design_type": ["digital"],
+  "maturity": "prototype",
+  "created": "2025-08-28T13:41:48Z",
+  "updated": "2025-08-28T13:41:48Z",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/namitvarmass/ssemi_afe_adc_decimation",
+    "commit": "main",
+    "private": false,
+    "containsEncryptedPayload": false,
+    "indexing": true
+  },
+  "sourceFiles": [
+    {
+      "path": "rtl/ssemi_adc_decimator_top.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi",
+      "vendor": {
+        "name": "SSEMI Inc.",
+        "docs": [
+          {
+            "title": "SSEMI ADC Decimator Documentation",
+            "url": "https://github.com/namitvarmass/ssemi_afe_adc_decimation/docs",
+            "type": "user_guide"
+          }
+        ],
+        "contact": {
+          "email": "support@ssemi.com",
+          "url": "https://ssemi.com/support"
+        }
+      }
+    },
+    {
+      "path": "rtl/ssemi_cic_filter.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_fir_filter.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_halfband_filter.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_config_status_regs.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_clock_divider.v",
+      "type": "rtl",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_defines.vh",
+      "type": "header",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "rtl/ssemi_timescale.vh",
+      "type": "header",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "tb/sv_tb/tb_ssemi_adc_decimator_top.v",
+      "type": "testbench",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "constraints/constraints.sdc",
+      "type": "constraint",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "constraints/constraints.xdc",
+      "type": "constraint",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "docs/ssemi_adc_decimator-architecture.md",
+      "type": "documentation",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "docs/ssemi_adc_decimator-design_spec.md",
+      "type": "documentation",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "SSEMI Development Team",
+      "email": "team@ssemi.com",
+      "github": "namitvarmass"
+    }
+  ],
+  "parameters": {
+    "CIC_STAGES": {
+      "type": "int",
+      "default": 5,
+      "range": [1, 8],
+      "description": "Number of CIC filter stages for coarse decimation"
+    },
+    "FIR_TAPS": {
+      "type": "int",
+      "default": 64,
+      "range": [4, 256],
+      "description": "Number of FIR filter taps for passband compensation"
+    },
+    "HALFBAND_TAPS": {
+      "type": "int",
+      "default": 33,
+      "range": [5, 128],
+      "description": "Number of halfband filter taps (must be odd)"
+    },
+    "DECIMATION_FACTOR": {
+      "type": "int",
+      "default": 64,
+      "range": [32, 512],
+      "description": "Overall decimation factor"
+    },
+    "INPUT_DATA_WIDTH": {
+      "type": "int",
+      "default": 16,
+      "range": [8, 48],
+      "description": "Input data width in bits"
+    },
+    "OUTPUT_DATA_WIDTH": {
+      "type": "int",
+      "default": 24,
+      "range": [8, 48],
+      "description": "Output data width in bits"
+    }
+  },
+  "interfaces": {
+    "clock": {
+      "i_clk": {
+        "direction": "input",
+        "width": 1,
+        "description": "Input clock (100MHz typical)"
+      },
+      "i_rst_n": {
+        "direction": "input",
+        "width": 1,
+        "description": "Active-low asynchronous reset"
+      }
+    },
+    "control": {
+      "i_enable": {
+        "direction": "input",
+        "width": 1,
+        "description": "Enable decimator operation"
+      },
+      "i_valid": {
+        "direction": "input",
+        "width": 1,
+        "description": "Input data valid signal"
+      },
+      "o_ready": {
+        "direction": "output",
+        "width": 1,
+        "description": "Ready to accept input data"
+      }
+    },
+    "data": {
+      "i_data": {
+        "direction": "input",
+        "width": 16,
+        "description": "Input data (16-bit signed)"
+      },
+      "o_data": {
+        "direction": "output",
+        "width": 24,
+        "description": "Output data (24-bit signed)"
+      },
+      "o_valid": {
+        "direction": "output",
+        "width": 1,
+        "description": "Output data valid signal"
+      }
+    },
+    "configuration": {
+      "i_config_valid": {
+        "direction": "input",
+        "width": 1,
+        "description": "Configuration data valid"
+      },
+      "i_config_addr": {
+        "direction": "input",
+        "width": 8,
+        "description": "Configuration address"
+      },
+      "i_config_data": {
+        "direction": "input",
+        "width": 32,
+        "description": "Configuration data"
+      },
+      "o_config_ready": {
+        "direction": "output",
+        "width": 1,
+        "description": "Configuration ready"
+      }
+    },
+    "status": {
+      "o_status": {
+        "direction": "output",
+        "width": 8,
+        "description": "Status information"
+      },
+      "o_busy": {
+        "direction": "output",
+        "width": 1,
+        "description": "Decimator busy"
+      },
+      "o_error": {
+        "direction": "output",
+        "width": 1,
+        "description": "Error flag"
+      },
+      "o_error_type": {
+        "direction": "output",
+        "width": 3,
+        "description": "Specific error type"
+      }
+    }
+  },
+  "toolRequirements": {
+    "synthesis": ["yosys", "synopsys", "cadence"],
+    "simulation": ["iverilog", "verilator", "modelsim"],
+    "verification": ["cocotb", "uvm"],
+    "implementation": ["openlane", "vivado", "quartus"]
+  },
+  "flows": {
+    "asic": {
+      "synthesis": "OpenLane flow with Yosys synthesis",
+      "implementation": "OpenROAD placement and routing",
+      "verification": "Formal verification with Yosys"
+    },
+    "fpga": {
+      "synthesis": "Vivado/Quartus synthesis",
+      "implementation": "FPGA-specific implementation",
+      "verification": "Functional simulation with testbench"
+    }
+  },
+  "test": {
+    "coverage": {
+      "functional": 95,
+      "code": 90,
+      "toggle": 100
+    },
+    "testbench": "tb/sv_tb/tb_ssemi_adc_decimator_top.v",
+    "testcases": [
+      "Basic functionality test",
+      "Parameter validation test",
+      "Error detection test",
+      "Overflow/underflow test",
+      "Configuration test",
+      "Status monitoring test"
+    ]
+  },
+  "performance": {
+    "max_frequency": "100MHz",
+    "throughput": "1 sample per clock cycle",
+    "latency": "Configurable based on filter stages",
+    "power": "Low power design with clock gating"
+  },
+  "categories": ["signal_processing", "analog_interface", "filter", "decimation"],
+  "tags": ["adc", "decimator", "cic", "fir", "halfband", "filter", "signal_processing", "analog_frontend"]
+}

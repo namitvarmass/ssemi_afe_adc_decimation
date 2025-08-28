@@ -4,10 +4,10 @@
 //=============================================================================
 // Module Name: ssemi_cic_filter
 //=============================================================================
-// Description: Configurable CIC (Cascaded Integrator-Comb) filter
-//              Supports configurable stages and decimation factor
-//              Implements Hogenauer's CIC filter architecture
-//              Features comprehensive error detection and overflow protection
+// Description: Configurable CIC (Cascaded Integrator-Comb) filter for ADC decimation
+//              Supports configurable stages, differential delay, and decimation factor
+//              Features overflow/underflow detection and saturation logic
+//              Optimized for high-speed operation with minimal resource usage
 // Author:      SSEMI Development Team
 // Date:        2025-08-26T17:54:47Z
 // License:     Apache-2.0
@@ -17,58 +17,48 @@
 `include "ssemi_defines.vh"
 
 module ssemi_cic_filter #(
-    parameter int CIC_STAGES = `SSEMI_CIC_STAGES,           // Number of CIC stages (1-8)
-    parameter int DIFFERENTIAL_DELAY = `SSEMI_CIC_DIFFERENTIAL_DELAY, // Differential delay (1-4)
-    parameter int DECIMATION_FACTOR = `SSEMI_DEFAULT_DECIMATION_FACTOR, // Decimation factor (32-512)
-    parameter int INPUT_DATA_WIDTH = `SSEMI_INPUT_DATA_WIDTH,  // Input data width
-    parameter int OUTPUT_DATA_WIDTH = `SSEMI_CIC_DATA_WIDTH    // Output data width
+    parameter CIC_STAGES = `SSEMI_CIC_STAGES,
+    parameter DIFFERENTIAL_DELAY = `SSEMI_CIC_DIFFERENTIAL_DELAY,
+    parameter DECIMATION_FACTOR = `SSEMI_DEFAULT_DECIMATION_FACTOR,
+    parameter INPUT_DATA_WIDTH = `SSEMI_INPUT_DATA_WIDTH,
+    parameter OUTPUT_DATA_WIDTH = `SSEMI_CIC_DATA_WIDTH
 ) (
     //==============================================================================
     // Clock and Reset Interface
     //==============================================================================
-    input  logic i_clk,           // Input clock (100MHz typical)
-    input  logic i_rst_n,         // Active-low asynchronous reset
+    input  wire i_clk,           // Input clock (100MHz typical)
+    input  wire i_rst_n,         // Active-low asynchronous reset
     
     //==============================================================================
     // Control Interface
     //==============================================================================
-    input  logic i_enable,        // Enable CIC filter operation
-    input  logic i_valid,         // Input data valid signal
-    output logic o_ready,         // Ready to accept input data
+    input  wire i_enable,        // Enable CIC filter operation
+    input  wire i_valid,         // Input data valid signal
+    output reg  o_ready,         // Ready to accept input data
     
     //==============================================================================
     // Data Interface
     //==============================================================================
-    input  logic [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (16-bit signed)
-    output logic [OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (32-bit signed)
-    output logic o_valid,         // Output data valid signal
+    input  wire [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (16-bit signed)
+    output reg  [OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (32-bit signed)
+    output reg  o_valid,         // Output data valid signal
     
     //==============================================================================
     // Status and Error Interface
     //==============================================================================
-    output logic o_overflow,      // Overflow detection flag
-    output logic o_underflow,     // Underflow detection flag
-    output logic o_busy,          // Filter busy indicator
-    output logic [3:0] o_stage_status  // Status of each CIC stage
+    output reg  o_overflow,      // Overflow detection flag
+    output reg  o_underflow,     // Underflow detection flag
+    output reg  o_busy,          // Filter busy indicator
+    output reg  [3:0] o_stage_status  // Status of each CIC stage
 );
 
     //==============================================================================
-    // Type Definitions for Better Type Safety
+    // Error Type Constants (replacing enum)
     //==============================================================================
-    typedef logic [INPUT_DATA_WIDTH-1:0] ssemi_input_data_t;
-    typedef logic [OUTPUT_DATA_WIDTH-1:0] ssemi_output_data_t;
-    typedef logic [OUTPUT_DATA_WIDTH-1:0] ssemi_integrator_data_t;
-    typedef logic [OUTPUT_DATA_WIDTH-1:0] ssemi_comb_data_t;
-    typedef logic [3:0] ssemi_stage_status_t;
-    typedef logic [15:0] ssemi_decimation_counter_t;
-    
-    // Error type enumeration
-    typedef enum logic [1:0] {
-        CIC_ERROR_NONE = 2'b00,
-        CIC_ERROR_OVERFLOW = 2'b01,
-        CIC_ERROR_UNDERFLOW = 2'b10,
-        CIC_ERROR_INVALID_CONFIG = 2'b11
-    } cic_error_type_e;
+    parameter SSEMI_CIC_ERROR_NONE = 2'b00;
+    parameter SSEMI_CIC_ERROR_OVERFLOW = 2'b01;
+    parameter SSEMI_CIC_ERROR_UNDERFLOW = 2'b10;
+    parameter SSEMI_CIC_ERROR_RESERVED = 2'b11;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
@@ -116,34 +106,34 @@ module ssemi_cic_filter #(
     //==============================================================================
     
     // Integrator stage registers
-    ssemi_integrator_data_t integrator_regs [0:CIC_STAGES-1];
-    ssemi_integrator_data_t integrator_next [0:CIC_STAGES-1];
+    reg [OUTPUT_DATA_WIDTH-1:0] integrator_regs [0:CIC_STAGES-1];
+    reg [OUTPUT_DATA_WIDTH-1:0] integrator_next [0:CIC_STAGES-1];
     
     // Comb stage registers
-    ssemi_comb_data_t comb_regs [0:CIC_STAGES-1][0:DIFFERENTIAL_DELAY-1];
-    ssemi_comb_data_t comb_next [0:CIC_STAGES-1][0:DIFFERENTIAL_DELAY-1];
+    reg [OUTPUT_DATA_WIDTH-1:0] comb_regs [0:CIC_STAGES-1][0:DIFFERENTIAL_DELAY-1];
+    reg [OUTPUT_DATA_WIDTH-1:0] comb_next [0:CIC_STAGES-1][0:DIFFERENTIAL_DELAY-1];
     
     // Decimation control
-    ssemi_decimation_counter_t decimation_counter;
-    logic decimation_enable;
-    logic sample_ready;
+    reg [15:0] decimation_counter;
+    reg decimation_enable;
+    reg sample_ready;
     
     // Error detection
-    logic overflow_detected;
-    logic underflow_detected;
-    logic [CIC_STAGES-1:0] stage_overflow;
-    logic [CIC_STAGES-1:0] stage_underflow;
+    reg overflow_detected;
+    reg underflow_detected;
+    reg [CIC_STAGES-1:0] stage_overflow;
+    reg [CIC_STAGES-1:0] stage_underflow;
     
     // Status tracking
-    ssemi_stage_status_t stage_status_reg;
-    logic busy_reg;
+    reg [3:0] stage_status_reg;
+    reg busy_reg;
     
     //==============================================================================
     // Decimation Control Logic
     //==============================================================================
     
     // Decimation counter for controlling output rate
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             decimation_counter <= 16'h0000;
             decimation_enable <= 1'b0;
@@ -171,7 +161,7 @@ module ssemi_cic_filter #(
     genvar i;
     generate
         for (i = 0; i < CIC_STAGES; i = i + 1) begin : integrator_stages
-            always_ff @(posedge i_clk or negedge i_rst_n) begin
+            always @(posedge i_clk or negedge i_rst_n) begin
                 if (!i_rst_n) begin
                     integrator_regs[i] <= '0;
                     stage_overflow[i] <= 1'b0;
@@ -196,7 +186,7 @@ module ssemi_cic_filter #(
             end
             
             // Integrator computation with saturation
-            always_comb begin
+            always @(*) begin
                 if (i == 0) begin
                     // First stage: add input data
                     integrator_next[i] = integrator_regs[i] + {{(OUTPUT_DATA_WIDTH-INPUT_DATA_WIDTH){i_data[INPUT_DATA_WIDTH-1]}}, i_data};
@@ -224,7 +214,7 @@ module ssemi_cic_filter #(
     generate
         for (j = 0; j < CIC_STAGES; j = j + 1) begin : comb_stages
             for (k = 0; k < DIFFERENTIAL_DELAY; k = k + 1) begin : delay_elements
-                always_ff @(posedge i_clk or negedge i_rst_n) begin
+                always @(posedge i_clk or negedge i_rst_n) begin
                     if (!i_rst_n) begin
                         comb_regs[j][k] <= '0;
                     end else if (!i_enable) begin
@@ -235,7 +225,7 @@ module ssemi_cic_filter #(
                 end
                 
                 // Comb computation
-                always_comb begin
+                always @(*) begin
                     if (j == 0) begin
                         if (k == 0) begin
                             // First delay element: store integrator output
@@ -271,7 +261,7 @@ module ssemi_cic_filter #(
     assign underflow_detected = |stage_underflow;
     
     // Status tracking
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             stage_status_reg <= 4'h0;
             busy_reg <= 1'b0;

@@ -4,10 +4,10 @@
 //=============================================================================
 // Module Name: ssemi_halfband_filter
 //=============================================================================
-// Description: Configurable halfband FIR filter with 2:1 decimation
-//              Optimized for symmetric coefficients with zero-valued odd taps
-//              Provides efficient implementation for final decimation stage
-//              Features comprehensive error detection and overflow protection
+// Description: Configurable halfband FIR filter for ADC decimation
+//              Supports configurable taps, coefficient width, and data width
+//              Features coefficient update capability and overflow protection
+//              Optimized for 2:1 decimation with zero-valued odd taps
 // Author:      SSEMI Development Team
 // Date:        2025-08-26T17:54:47Z
 // License:     Apache-2.0
@@ -17,69 +17,58 @@
 `include "ssemi_defines.vh"
 
 module ssemi_halfband_filter #(
-    parameter int NUM_TAPS = `SSEMI_HALFBAND_TAPS,              // Number of filter taps (must be odd)
-    parameter int COEFF_WIDTH = `SSEMI_HALFBAND_COEFF_WIDTH,    // Coefficient width (8-24 bits)
-    parameter int INPUT_DATA_WIDTH = `SSEMI_FIR_DATA_WIDTH,     // Input data width
-    parameter int OUTPUT_DATA_WIDTH = `SSEMI_OUTPUT_DATA_WIDTH  // Output data width
+    parameter NUM_TAPS = `SSEMI_HALFBAND_TAPS,
+    parameter COEFF_WIDTH = `SSEMI_HALFBAND_COEFF_WIDTH,
+    parameter INPUT_DATA_WIDTH = `SSEMI_FIR_DATA_WIDTH,
+    parameter OUTPUT_DATA_WIDTH = `SSEMI_OUTPUT_DATA_WIDTH
 ) (
     //==============================================================================
     // Clock and Reset Interface
     //==============================================================================
-    input  logic i_clk,           // Input clock (100MHz typical)
-    input  logic i_rst_n,         // Active-low asynchronous reset
+    input  wire i_clk,           // Input clock (100MHz typical)
+    input  wire i_rst_n,         // Active-low asynchronous reset
     
     //==============================================================================
     // Control Interface
     //==============================================================================
-    input  logic i_enable,        // Enable halfband filter operation
-    input  logic i_valid,         // Input data valid signal
-    output logic o_ready,         // Ready to accept input data
+    input  wire i_enable,        // Enable halfband filter operation
+    input  wire i_valid,         // Input data valid signal
+    output reg  o_ready,         // Ready to accept input data
     
     //==============================================================================
     // Data Interface
     //==============================================================================
-    input  logic [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (24-bit signed)
-    output logic [OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (24-bit signed)
-    output logic o_valid,         // Output data valid signal
+    input  wire [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (24-bit signed)
+    output reg  [OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (24-bit signed)
+    output reg  o_valid,         // Output data valid signal
     
     //==============================================================================
     // Coefficient Interface
     //==============================================================================
-    input  logic [COEFF_WIDTH-1:0] i_coeff [0:NUM_TAPS-1], // Filter coefficients
-    input  logic i_coeff_valid,   // Coefficient update valid
-    output logic o_coeff_ready,   // Ready for coefficient update
+    input  wire [COEFF_WIDTH-1:0] i_coeff [0:NUM_TAPS-1], // Filter coefficients
+    input  wire i_coeff_valid,   // Coefficient update valid
+    output reg  o_coeff_ready,   // Ready for coefficient update
     
     //==============================================================================
     // Status and Error Interface
     //==============================================================================
-    output logic o_overflow,      // Overflow detection flag
-    output logic o_underflow,     // Underflow detection flag
-    output logic o_busy,          // Filter busy indicator
-    output logic [4:0] o_tap_status  // Status of filter taps
+    output reg  o_overflow,      // Overflow detection flag
+    output reg  o_underflow,     // Underflow detection flag
+    output reg  o_busy,          // Filter busy indicator
+    output reg  [4:0] o_tap_status  // Status of filter taps
 );
 
     //==============================================================================
-    // Type Definitions for Better Type Safety
+    // Error Type Constants (replacing enum)
     //==============================================================================
-    typedef logic [INPUT_DATA_WIDTH-1:0] ssemi_input_data_t;
-    typedef logic [OUTPUT_DATA_WIDTH-1:0] ssemi_output_data_t;
-    typedef logic [COEFF_WIDTH-1:0] ssemi_coeff_t;
-    typedef logic [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] ssemi_mult_result_t;
-    typedef logic [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2((NUM_TAPS+1)/2)-1:0] ssemi_accum_result_t;
-    typedef logic [4:0] ssemi_tap_status_t;
-    typedef logic [$clog2(NUM_TAPS)-1:0] ssemi_tap_index_t;
-    
-    // Error type enumeration
-    typedef enum logic [2:0] {
-        HALFBAND_ERROR_NONE = 3'b000,
-        HALFBAND_ERROR_OVERFLOW = 3'b001,
-        HALFBAND_ERROR_UNDERFLOW = 3'b010,
-        HALFBAND_ERROR_INVALID_CONFIG = 3'b011,
-        HALFBAND_ERROR_COEFF_RANGE = 3'b100,
-        HALFBAND_ERROR_ODD_TAP_NONZERO = 3'b101,
-        HALFBAND_ERROR_RESERVED1 = 3'b110,
-        HALFBAND_ERROR_RESERVED2 = 3'b111
-    } halfband_error_type_e;
+    parameter SSEMI_HALFBAND_ERROR_NONE = 3'b000;
+    parameter SSEMI_HALFBAND_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_HALFBAND_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_HALFBAND_ERROR_INVALID_COEFF = 3'b011;
+    parameter SSEMI_HALFBAND_ERROR_ODD_TAP_NONZERO = 3'b100;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED1 = 3'b101;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED2 = 3'b110;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED3 = 3'b111;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
@@ -128,47 +117,47 @@ module ssemi_halfband_filter #(
     //==============================================================================
     
     // Data delay line (shift register) - only even-indexed taps are used
-    ssemi_input_data_t data_delay_line [0:NUM_TAPS-1];
-    ssemi_input_data_t data_delay_next [0:NUM_TAPS-1];
+    reg [INPUT_DATA_WIDTH-1:0] data_delay_line [0:NUM_TAPS-1];
+    reg [INPUT_DATA_WIDTH-1:0] data_delay_next [0:NUM_TAPS-1];
     
     // Coefficient registers
-    ssemi_coeff_t coeff_regs [0:NUM_TAPS-1];
-    ssemi_coeff_t coeff_next [0:NUM_TAPS-1];
+    reg [COEFF_WIDTH-1:0] coeff_regs [0:NUM_TAPS-1];
+    reg [COEFF_WIDTH-1:0] coeff_next [0:NUM_TAPS-1];
     
     // Multiplication results (only for even-indexed coefficients)
-    ssemi_mult_result_t mult_results [0:(NUM_TAPS-1)/2];
-    ssemi_mult_result_t mult_results_saturated [0:(NUM_TAPS-1)/2];
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results [0:(NUM_TAPS-1)/2];
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results_saturated [0:(NUM_TAPS-1)/2];
     
     // Accumulation
-    ssemi_accum_result_t accumulator;
-    ssemi_accum_result_t accumulator_next;
-    ssemi_output_data_t output_data;
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2((NUM_TAPS+1)/2)-1:0] accumulator;
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2((NUM_TAPS+1)/2)-1:0] accumulator_next;
+    reg [OUTPUT_DATA_WIDTH-1:0] output_data;
     
     // Control signals
-    logic processing_valid;
-    logic processing_ready;
-    logic coeff_update_enable;
-    logic [NUM_TAPS-1:0] tap_active;
-    logic sample_ready;
+    reg processing_valid;
+    reg processing_ready;
+    reg coeff_update_enable;
+    reg [NUM_TAPS-1:0] tap_active;
+    reg sample_ready;
     
     // Error detection
-    logic overflow_detected;
-    logic underflow_detected;
-    logic [NUM_TAPS-1:0] tap_overflow;
-    logic [NUM_TAPS-1:0] tap_underflow;
-    logic odd_tap_nonzero_error;
+    reg overflow_detected;
+    reg underflow_detected;
+    reg [NUM_TAPS-1:0] tap_overflow;
+    reg [NUM_TAPS-1:0] tap_underflow;
+    reg odd_tap_nonzero_error;
     
     // Status tracking
-    ssemi_tap_status_t tap_status_reg;
-    logic busy_reg;
-    logic coeff_ready_reg;
+    reg [4:0] tap_status_reg;
+    reg busy_reg;
+    reg coeff_ready_reg;
 
     //==============================================================================
     // Coefficient Management
     //==============================================================================
     
     // Coefficient update logic
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             for (int i = 0; i < NUM_TAPS; i = i + 1) begin
                 coeff_regs[i] <= '0;
@@ -190,7 +179,7 @@ module ssemi_halfband_filter #(
     end
     
     // Coefficient validation and assignment
-    always_comb begin
+    always @(*) begin
         odd_tap_nonzero_error = 1'b0;
         for (int i = 0; i < NUM_TAPS; i = i + 1) begin
             // Validate coefficient range
@@ -214,7 +203,7 @@ module ssemi_halfband_filter #(
     //==============================================================================
     
     // Shift register for input data
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             for (int i = 0; i < NUM_TAPS; i = i + 1) begin
                 data_delay_line[i] <= '0;
@@ -231,7 +220,7 @@ module ssemi_halfband_filter #(
     end
     
     // Data delay line shift logic
-    always_comb begin
+    always @(*) begin
         data_delay_next[0] = i_data;
         for (int i = 1; i < NUM_TAPS; i = i + 1) begin
             data_delay_next[i] = data_delay_line[i-1];
@@ -250,7 +239,7 @@ module ssemi_halfband_filter #(
             assign mult_results[j] = data_delay_line[j*2] * coeff_regs[j*2];
             
             // Overflow/underflow detection for each multiplication
-            always_comb begin
+            always @(*) begin
                 if (mult_results[j] > {1'b0, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b1}}}) begin
                     mult_results_saturated[j] = {1'b0, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b1}}};
                     tap_overflow[j*2] = 1'b1;
@@ -273,7 +262,7 @@ module ssemi_halfband_filter #(
     endgenerate
     
     // Accumulation with overflow protection
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             accumulator <= '0;
             output_data <= '0;
@@ -301,7 +290,7 @@ module ssemi_halfband_filter #(
     end
     
     // Accumulation computation (only even-indexed coefficients)
-    always_comb begin
+    always @(*) begin
         accumulator_next = '0;
         for (int k = 0; k < (NUM_TAPS+1)/2; k = k + 1) begin
             accumulator_next = accumulator_next + mult_results_saturated[k];
@@ -317,7 +306,7 @@ module ssemi_halfband_filter #(
     assign underflow_detected = |tap_underflow;
     
     // Status tracking
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             tap_status_reg <= 5'h00;
             busy_reg <= 1'b0;

@@ -56,14 +56,14 @@ module ssemi_config_status_regs #(
     // Error Type Constants
     //==============================================================================
     // Error type constants (replacing enum)
-    parameter ERROR_NONE = 3'b000;
-    parameter ERROR_OVERFLOW = 3'b001;
-    parameter ERROR_UNDERFLOW = 3'b010;
-    parameter ERROR_INVALID_CONFIG = 3'b011;
-    parameter ERROR_INVALID_ADDR = 3'b100;
-    parameter ERROR_COEFF_RANGE = 3'b101;
-    parameter ERROR_RESERVED1 = 3'b110;
-    parameter ERROR_RESERVED2 = 3'b111;
+    parameter SSEMI_CONFIG_ERROR_NONE = 3'b000;
+    parameter SSEMI_CONFIG_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_CONFIG_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_CONFIG_ERROR_INVALID_CONFIG = 3'b011;
+    parameter SSEMI_CONFIG_ERROR_INVALID_ADDR = 3'b100;
+    parameter SSEMI_CONFIG_ERROR_COEFF_RANGE = 3'b101;
+    parameter SSEMI_CONFIG_ERROR_RESERVED1 = 3'b110;
+    parameter SSEMI_CONFIG_ERROR_RESERVED2 = 3'b111;
 
     //==============================================================================
     // Internal Signals and Registers
@@ -311,15 +311,15 @@ module ssemi_config_status_regs #(
     // Error type determination
     always @(*) begin
         if (overflow_detected) begin
-            error_type_reg = ERROR_OVERFLOW;
+            error_type_reg = SSEMI_CONFIG_ERROR_OVERFLOW;
         end else if (underflow_detected) begin
-            error_type_reg = ERROR_UNDERFLOW;
+            error_type_reg = SSEMI_CONFIG_ERROR_UNDERFLOW;
         end else if (invalid_config || invalid_addr) begin
-            error_type_reg = ERROR_INVALID_CONFIG;
+            error_type_reg = SSEMI_CONFIG_ERROR_INVALID_CONFIG;
         end else if (coeff_range_error) begin
-            error_type_reg = ERROR_COEFF_RANGE;
+            error_type_reg = SSEMI_CONFIG_ERROR_COEFF_RANGE;
         end else begin
-            error_type_reg = ERROR_NONE;
+            error_type_reg = SSEMI_CONFIG_ERROR_NONE;
         end
     end
 
