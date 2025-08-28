@@ -1,5 +1,5 @@
-`ifndef SSEMI_CONFIG_STATUS_REGS_SV
-`define SSEMI_CONFIG_STATUS_REGS_SV
+`ifndef SSEMI_CONFIG_STATUS_REGS_V
+`define SSEMI_CONFIG_STATUS_REGS_V
 
 //=============================================================================
 // Module Name: ssemi_config_status_regs
@@ -16,80 +16,71 @@
 `include "ssemi_defines.vh"
 
 module ssemi_config_status_regs #(
-    parameter int FIR_TAPS = `SSEMI_FIR_TAPS,
-    parameter int HALFBAND_TAPS = `SSEMI_HALFBAND_TAPS
+    parameter FIR_TAPS = `SSEMI_FIR_TAPS,
+    parameter HALFBAND_TAPS = `SSEMI_HALFBAND_TAPS
 ) (
     // Clock and Reset
-    input  logic i_clk,           // Input clock
-    input  logic i_rst_n,         // Active-low reset
+    input  wire i_clk,           // Input clock
+    input  wire i_rst_n,         // Active-low reset
     
     // Control Interface
-    input  logic i_enable,        // Enable register access
-    input  logic i_config_valid,  // Configuration data valid
-    input  logic [7:0] i_config_addr,  // Configuration address
-    input  logic [31:0] i_config_data, // Configuration data
-    output logic o_config_ready,  // Configuration ready
+    input  wire i_enable,        // Enable register access
+    input  wire i_config_valid,  // Configuration data valid
+    input  wire [7:0] i_config_addr,  // Configuration address
+    input  wire [31:0] i_config_data, // Configuration data
+    output reg  o_config_ready,  // Configuration ready
     
     // Status Interface
-    input  logic i_cic_valid,     // CIC stage valid
-    input  logic i_fir_valid,     // FIR stage valid
-    input  logic i_halfband_valid, // Halfband stage valid
-    input  logic i_cic_overflow,  // CIC overflow detected
-    input  logic i_fir_overflow,  // FIR overflow detected
-    input  logic i_halfband_overflow, // Halfband overflow detected
-    input  logic i_cic_underflow, // CIC underflow detected
-    input  logic i_fir_underflow, // FIR underflow detected
-    input  logic i_halfband_underflow, // Halfband underflow detected
+    input  wire i_cic_valid,     // CIC stage valid
+    input  wire i_fir_valid,     // FIR stage valid
+    input  wire i_halfband_valid, // Halfband stage valid
+    input  wire i_cic_overflow,  // CIC overflow detected
+    input  wire i_fir_overflow,  // FIR overflow detected
+    input  wire i_halfband_overflow, // Halfband overflow detected
+    input  wire i_cic_underflow, // CIC underflow detected
+    input  wire i_fir_underflow, // FIR underflow detected
+    input  wire i_halfband_underflow, // Halfband underflow detected
     
     // Coefficient Outputs
-    output logic [`SSEMI_FIR_COEFF_WIDTH-1:0] o_fir_coeff [0:FIR_TAPS-1],      // FIR coefficients
-    output logic [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] o_halfband_coeff [0:HALFBAND_TAPS-1], // Halfband coefficients
+    output wire [`SSEMI_FIR_COEFF_WIDTH-1:0] o_fir_coeff [0:FIR_TAPS-1],      // FIR coefficients
+    output wire [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] o_halfband_coeff [0:HALFBAND_TAPS-1], // Halfband coefficients
     
     // Status Outputs
-    output logic [7:0] o_status,              // Status information
-    output logic o_busy,                      // Decimator busy
-    output logic o_error,                     // Error flag
-    output logic [2:0] o_error_type           // Specific error type
+    output reg  [7:0] o_status,              // Status information
+    output reg  o_busy,                      // Decimator busy
+    output reg  o_error,                     // Error flag
+    output reg  [2:0] o_error_type           // Specific error type
 );
 
     //==============================================================================
-    // Type Definitions for Better Type Safety
+    // Error Type Constants
     //==============================================================================
-    typedef logic [`SSEMI_FIR_COEFF_WIDTH-1:0] ssemi_fir_coeff_t;
-    typedef logic [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] ssemi_halfband_coeff_t;
-    typedef logic [7:0] ssemi_status_t;
-    typedef logic [31:0] ssemi_config_data_t;
-    typedef logic [7:0] ssemi_config_addr_t;
-    typedef logic [2:0] ssemi_error_type_t;
-    
-    // Error type enumeration
-    typedef enum logic [2:0] {
-        ERROR_NONE = 3'b000,
-        ERROR_OVERFLOW = 3'b001,
-        ERROR_UNDERFLOW = 3'b010,
-        ERROR_INVALID_CONFIG = 3'b011,
-        ERROR_INVALID_ADDR = 3'b100,
-        ERROR_COEFF_RANGE = 3'b101,
-        ERROR_RESERVED1 = 3'b110,
-        ERROR_RESERVED2 = 3'b111
-    } error_type_e;
+    // Error type constants (replacing enum)
+    parameter ERROR_NONE = 3'b000;
+    parameter ERROR_OVERFLOW = 3'b001;
+    parameter ERROR_UNDERFLOW = 3'b010;
+    parameter ERROR_INVALID_CONFIG = 3'b011;
+    parameter ERROR_INVALID_ADDR = 3'b100;
+    parameter ERROR_COEFF_RANGE = 3'b101;
+    parameter ERROR_RESERVED1 = 3'b110;
+    parameter ERROR_RESERVED2 = 3'b111;
 
     //==============================================================================
     // Internal Signals and Registers
     //==============================================================================
     
     // Configuration registers
-    ssemi_config_data_t config_reg [0:255];
-    ssemi_status_t status_reg;
-    logic busy_reg, error_reg;
-    ssemi_error_type_t error_type_reg;
+    reg [31:0] config_reg [0:255];
+    reg [7:0] status_reg;
+    reg busy_reg, error_reg;
+    reg [2:0] error_type_reg;
     
     // Error detection signals
-    logic overflow_detected;
-    logic underflow_detected;
-    logic invalid_config;
-    logic invalid_addr;
-    logic coeff_range_error;
+    wire overflow_detected;
+    wire underflow_detected;
+    wire invalid_config;
+    wire invalid_addr;
+    wire coeff_range_error;
     
     // Parameter validation (verification only)
 `ifdef SSEMI_VERIFICATION
@@ -124,12 +115,73 @@ module ssemi_config_status_regs #(
     //==============================================================================
     
     // Configuration register write logic
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             // Initialize configuration registers with default values
-            for (int i = 0; i < 256; i = i + 1) begin
-                config_reg[i] <= 32'h00000000;
-            end
+            config_reg[0] <= 32'h00000000;
+            config_reg[1] <= 32'h00000000;
+            config_reg[2] <= 32'h00000000;
+            config_reg[3] <= 32'h00000000;
+            config_reg[4] <= 32'h00000000;
+            config_reg[5] <= 32'h00000000;
+            config_reg[6] <= 32'h00000000;
+            config_reg[7] <= 32'h00000000;
+            config_reg[8] <= 32'h00000000;
+            config_reg[9] <= 32'h00000000;
+            config_reg[10] <= 32'h00000000;
+            config_reg[11] <= 32'h00000000;
+            config_reg[12] <= 32'h00000000;
+            config_reg[13] <= 32'h00000000;
+            config_reg[14] <= 32'h00000000;
+            config_reg[15] <= 32'h00000000;
+            config_reg[16] <= 32'h00000000;
+            config_reg[17] <= 32'h00000000;
+            config_reg[18] <= 32'h00000000;
+            config_reg[19] <= 32'h00000000;
+            config_reg[20] <= 32'h00000000;
+            config_reg[21] <= 32'h00000000;
+            config_reg[22] <= 32'h00000000;
+            config_reg[23] <= 32'h00000000;
+            config_reg[24] <= 32'h00000000;
+            config_reg[25] <= 32'h00000000;
+            config_reg[26] <= 32'h00000000;
+            config_reg[27] <= 32'h00000000;
+            config_reg[28] <= 32'h00000000;
+            config_reg[29] <= 32'h00000000;
+            config_reg[30] <= 32'h00000000;
+            config_reg[31] <= 32'h00000000;
+            config_reg[32] <= 32'h00000000;
+            config_reg[33] <= 32'h00000000;
+            config_reg[34] <= 32'h00000000;
+            config_reg[35] <= 32'h00000000;
+            config_reg[36] <= 32'h00000000;
+            config_reg[37] <= 32'h00000000;
+            config_reg[38] <= 32'h00000000;
+            config_reg[39] <= 32'h00000000;
+            config_reg[40] <= 32'h00000000;
+            config_reg[41] <= 32'h00000000;
+            config_reg[42] <= 32'h00000000;
+            config_reg[43] <= 32'h00000000;
+            config_reg[44] <= 32'h00000000;
+            config_reg[45] <= 32'h00000000;
+            config_reg[46] <= 32'h00000000;
+            config_reg[47] <= 32'h00000000;
+            config_reg[48] <= 32'h00000000;
+            config_reg[49] <= 32'h00000000;
+            config_reg[50] <= 32'h00000000;
+            config_reg[51] <= 32'h00000000;
+            config_reg[52] <= 32'h00000000;
+            config_reg[53] <= 32'h00000000;
+            config_reg[54] <= 32'h00000000;
+            config_reg[55] <= 32'h00000000;
+            config_reg[56] <= 32'h00000000;
+            config_reg[57] <= 32'h00000000;
+            config_reg[58] <= 32'h00000000;
+            config_reg[59] <= 32'h00000000;
+            config_reg[60] <= 32'h00000000;
+            config_reg[61] <= 32'h00000000;
+            config_reg[62] <= 32'h00000000;
+            config_reg[63] <= 32'h00000000;
             
             // Load default FIR coefficients
             config_reg[0] <= `SSEMI_DEFAULT_FIR_COEFF_0;
@@ -257,7 +309,7 @@ module ssemi_config_status_regs #(
                                (i_config_data > 32'h0003FFFF); // Check coefficient range
     
     // Error type determination
-    always_comb begin
+    always @(*) begin
         if (overflow_detected) begin
             error_type_reg = ERROR_OVERFLOW;
         end else if (underflow_detected) begin
@@ -276,7 +328,7 @@ module ssemi_config_status_regs #(
     //==============================================================================
     
     // Status register and control logic
-    always_ff @(posedge i_clk or negedge i_rst_n) begin
+    always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
             status_reg <= 8'h00;
             busy_reg <= 1'b0;
@@ -337,4 +389,4 @@ module ssemi_config_status_regs #(
 
 endmodule
 
-`endif // SSEMI_CONFIG_STATUS_REGS_SV
+`endif // SSEMI_CONFIG_STATUS_REGS_V
