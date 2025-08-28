@@ -20,10 +20,10 @@ This project follows Vyges conventions for hardware IP development. Always refer
 - Modules: snake_case (e.g., pwm_controller)
 - Files: snake_case.sv (e.g., pwm_controller.sv)
 - Parameters: UPPER_SNAKE_CASE
-- Signals: snake_case with direction suffix (_i, _o, _io)
+- Signals: snake_case with direction prefix (i_, o_, io_)
 
 ## Required Patterns
-- All modules must have clock_i and reset_n_i signals
+- All modules must have i_clk and i_rst_n signals
 - Include proper interface patterns (APB, AXI, etc.)
 - Testbenches must include clock generation and reset sequence
 - Documentation must include pinout tables from metadata

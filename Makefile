@@ -13,9 +13,9 @@
 # Customize these for your specific IP implementation
 
 # IP Block Configuration
-BLOCK_NAME := example
+BLOCK_NAME := ssemi_adc_decimator
 MODULE_NAME := core
-TOP_MODULE := example_core
+TOP_MODULE := ssemi_adc_decimator_core
 
 # Tool Configuration
 SYNTHESIS_TOOL := yosys
