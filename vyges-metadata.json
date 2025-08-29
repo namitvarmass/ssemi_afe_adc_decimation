@@ -10,7 +10,7 @@
   "design_type": ["digital"],
   "maturity": "prototype",
   "created": "2025-08-28T13:41:48Z",
-  "updated": "2025-08-28T13:41:48Z",
+  "updated": "2025-08-29T07:06:38Z",
   "source": {
     "type": "git",
     "url": "https://github.com/namitvarmass/ssemi_afe_adc_decimation",
@@ -93,6 +93,14 @@
     {
       "path": "rtl/ssemi_timescale.vh",
       "type": "header",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "integration/ssemi_adc_decimator_top_wrapper.v",
+      "type": "integration",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
       "license": "Apache-2.0",

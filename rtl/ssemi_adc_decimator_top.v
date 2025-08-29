@@ -126,7 +126,6 @@ module ssemi_adc_decimator_top #(
     //==============================================================================
     
     // Clock divider signals
-    wire cic_clk;
     wire fir_clk;
     wire halfband_clk;
     
@@ -168,16 +167,6 @@ module ssemi_adc_decimator_top #(
     // Clock Divider Instances
     //==============================================================================
     
-    // Clock divider for CIC stage
-    ssemi_clock_divider #(
-        .CLK_DIV_RATIO(1)  // CIC runs at full clock rate
-    ) cic_clock_div (
-        .i_clk(i_clk),
-        .i_rst_n(i_rst_n),
-        .i_enable(i_enable),
-        .o_clk_div(cic_clk)
-    );
-    
     // Clock divider for FIR stage
     ssemi_clock_divider #(
         .CLK_DIV_RATIO(DECIMATION_FACTOR)  // FIR runs at decimated rate
@@ -190,9 +179,9 @@ module ssemi_adc_decimator_top #(
     
     // Clock divider for halfband stage
     ssemi_clock_divider #(
-        .CLK_DIV_RATIO(2)  // Halfband runs at 2:1 decimation
+        .CLK_DIV_RATIO(2)  // Halfband runs at 2:1 decimation from FIR rate
     ) halfband_clock_div (
-        .i_clk(i_clk),
+        .i_clk(fir_clk),   // Use FIR clock as input for cascaded division
         .i_rst_n(i_rst_n),
         .i_enable(i_enable),
         .o_clk_div(halfband_clk)
@@ -265,7 +254,7 @@ module ssemi_adc_decimator_top #(
         .INPUT_DATA_WIDTH(`SSEMI_CIC_DATA_WIDTH),
         .OUTPUT_DATA_WIDTH(`SSEMI_FIR_DATA_WIDTH)
     ) fir_filter (
-        .i_clk(i_clk),
+        .i_clk(fir_clk),   // Use divided clock for FIR stage
         .i_rst_n(i_rst_n),
         .i_enable(i_enable),
         .i_valid(cic_output_valid),
@@ -292,7 +281,7 @@ module ssemi_adc_decimator_top #(
         .INPUT_DATA_WIDTH(`SSEMI_FIR_DATA_WIDTH),
         .OUTPUT_DATA_WIDTH(`SSEMI_OUTPUT_DATA_WIDTH)
     ) halfband_filter (
-        .i_clk(i_clk),
+        .i_clk(halfband_clk),   // Use divided clock for halfband stage
         .i_rst_n(i_rst_n),
         .i_enable(i_enable),
         .i_valid(fir_output_valid),

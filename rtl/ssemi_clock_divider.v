@@ -15,7 +15,7 @@
 `include "ssemi_defines.vh"
 
 module ssemi_clock_divider #(
-    parameter CLK_DIV_RATIO = 2  // Clock division ratio (1 to SSEMI_CLK_DIV_MAX)
+    parameter CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_CLK_DIV_MAX)
 ) (
     // Clock and Reset
     input  wire i_clk,           // Input clock
@@ -38,8 +38,8 @@ module ssemi_clock_divider #(
     
     // Parameter validation
     initial begin
-        if (CLK_DIV_RATIO < 1 || CLK_DIV_RATIO > `SSEMI_CLK_DIV_MAX) begin
-            $error("CLK_DIV_RATIO must be between 1 and %d", `SSEMI_CLK_DIV_MAX);
+        if (CLK_DIV_RATIO < 2 || CLK_DIV_RATIO > `SSEMI_CLK_DIV_MAX) begin
+            $error("CLK_DIV_RATIO must be between 2 and %d", `SSEMI_CLK_DIV_MAX);
         end
     end
     
