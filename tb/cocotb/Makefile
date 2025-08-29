@@ -17,14 +17,18 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
-# Design source files (user should customize these)
-VERILOG_SOURCES += $(PWD)/../../rtl/example_core_example_module.sv
-# Add more RTL files as needed:
-# VERILOG_SOURCES += $(PWD)/../../rtl/module1.sv
-# VERILOG_SOURCES += $(PWD)/../../rtl/module2.sv
+# Design source files for SSEMI ADC Decimator
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_timescale.vh
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_defines.vh
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_clock_divider.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_cic_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_fir_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_halfband_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_config_status_regs.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_top.v
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
-TOPLEVEL = example_module
+TOPLEVEL = ssemi_adc_decimator_top
 
 # MODULE is the basename of the Python test file
 MODULE = test_example
@@ -74,14 +78,35 @@ endif
 
 # Additional targets for different test modules (only work with full cocotb)
 ifneq ($(wildcard $(COCOTB_CONFIG)),)
-    test_rescaling:
-		MODULE=test_rescaling $(MAKE)
+    test_reset:
+		MODULE=test_reset $(MAKE)
 
-    test_edge_cases:
-		MODULE=test_edge_cases $(MAKE)
+    test_data_flow:
+		MODULE=test_data_flow $(MAKE)
 
-    test_all: test_basic test_rescaling test_edge_cases
-		@echo "All cocotb tests completed."
+    test_configuration:
+		MODULE=test_configuration $(MAKE)
+
+    test_error_detection:
+		MODULE=test_error_detection $(MAKE)
+
+    test_status_monitoring:
+		MODULE=test_status_monitoring $(MAKE)
+
+    test_overflow_underflow:
+		MODULE=test_overflow_underflow $(MAKE)
+
+    test_parameter_validation:
+		MODULE=test_parameter_validation $(MAKE)
+
+    test_handshaking:
+		MODULE=test_handshaking $(MAKE)
+
+    test_comprehensive:
+		MODULE=test_comprehensive $(MAKE)
+
+    test_all: test_reset test_data_flow test_configuration test_error_detection test_status_monitoring test_overflow_underflow test_parameter_validation test_handshaking test_comprehensive
+		@echo "All ADC decimator cocotb tests completed."
 
     # Coverage report generation
     coverage: run
@@ -97,12 +122,40 @@ ifneq ($(wildcard $(COCOTB_CONFIG)),)
 		fi
 		@echo "✅ Coverage report generation completed"
 else
-    test_rescaling:
-		@echo "⚠️  cocotb not available - skipping test_rescaling"
+    test_reset:
+		@echo "⚠️  cocotb not available - skipping test_reset"
 		@echo "   Install cocotb: pip install cocotb"
     
-    test_edge_cases:
-		@echo "⚠️  cocotb not available - skipping test_edge_cases"
+    test_data_flow:
+		@echo "⚠️  cocotb not available - skipping test_data_flow"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_configuration:
+		@echo "⚠️  cocotb not available - skipping test_configuration"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_error_detection:
+		@echo "⚠️  cocotb not available - skipping test_error_detection"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_status_monitoring:
+		@echo "⚠️  cocotb not available - skipping test_status_monitoring"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_overflow_underflow:
+		@echo "⚠️  cocotb not available - skipping test_overflow_underflow"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_parameter_validation:
+		@echo "⚠️  cocotb not available - skipping test_parameter_validation"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_handshaking:
+		@echo "⚠️  cocotb not available - skipping test_handshaking"
+		@echo "   Install cocotb: pip install cocotb"
+    
+    test_comprehensive:
+		@echo "⚠️  cocotb not available - skipping test_comprehensive"
 		@echo "   Install cocotb: pip install cocotb"
     
     test_all:
@@ -116,22 +169,29 @@ endif
 
 # Help target
 help:
-	@echo "Cocotb Testbench Makefile (Standard Approach)"
-	@echo "=============================================="
+	@echo "Cocotb Testbench Makefile for SSEMI ADC Decimator"
+	@echo "=================================================="
 	@echo ""
 	@echo "Available targets:"
-	@echo "  all              - Compile and run default test (default)"
-	@echo "  test_rescaling   - Run rescaling tests (requires cocotb)"
-	@echo "  test_edge_cases  - Run edge case tests (requires cocotb)"
-	@echo "  test_all         - Run all test modules (requires cocotb)"
-	@echo "  coverage         - Generate coverage report (requires cocotb)"
-	@echo "  clean            - Clean build artifacts"
-	@echo "  help             - Show this help message"
+	@echo "  all                    - Compile and run default test (default)"
+	@echo "  test_reset             - Test reset behavior (requires cocotb)"
+	@echo "  test_data_flow         - Test basic data flow (requires cocotb)"
+	@echo "  test_configuration     - Test configuration interface (requires cocotb)"
+	@echo "  test_error_detection   - Test error detection (requires cocotb)"
+	@echo "  test_status_monitoring - Test status monitoring (requires cocotb)"
+	@echo "  test_overflow_underflow- Test overflow/underflow detection (requires cocotb)"
+	@echo "  test_parameter_validation - Test parameter validation (requires cocotb)"
+	@echo "  test_handshaking       - Test handshaking protocol (requires cocotb)"
+	@echo "  test_comprehensive     - Run comprehensive test (requires cocotb)"
+	@echo "  test_all               - Run all test modules (requires cocotb)"
+	@echo "  coverage               - Generate coverage report (requires cocotb)"
+	@echo "  clean                  - Clean build artifacts"
+	@echo "  help                   - Show this help message"
 	@echo ""
 	@echo "Configuration variables:"
-	@echo "  SIM              - Simulator to use (icarus, verilator, vcs, modelsim)"
-	@echo "  TOPLEVEL         - Top-level module name (example_module)"
-	@echo "  MODULE           - Python test module name"
+	@echo "  SIM                    - Simulator to use (icarus, verilator, vcs, modelsim)"
+	@echo "  TOPLEVEL               - Top-level module name (ssemi_adc_decimator_top)"
+	@echo "  MODULE                 - Python test module name"
 	@echo ""
 	@echo "Cocotb Status:"
 ifneq ($(wildcard $(COCOTB_CONFIG)),)

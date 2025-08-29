@@ -115,6 +115,46 @@
       "block": "ssemi"
     },
     {
+      "path": "tb/cocotb/test_example.py",
+      "type": "testbench",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "tb/cocotb/test_reset.py",
+      "type": "testbench",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "tb/cocotb/test_data_flow.py",
+      "type": "testbench",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "tb/cocotb/test_comprehensive.py",
+      "type": "testbench",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "tb/cocotb/Makefile",
+      "type": "build",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
       "path": "constraints/constraints.sdc",
       "type": "constraint",
       "owner": "SSEMI Development Team",
