@@ -39,17 +39,20 @@ module tb_ssemi_adc_decimator_top;
     logic [`SSEMI_OUTPUT_DATA_WIDTH-1:0] o_data;
     logic o_valid;
     
-    // Configuration interface
-    logic i_config_valid;
-    logic [7:0] i_config_addr;
-    logic [31:0] i_config_data;
-    logic o_config_ready;
+    // CSR Write interface
+    logic i_csr_wr_valid;
+    logic [7:0] i_csr_addr;
+    logic [31:0] i_csr_wr_data;
+    logic o_csr_wr_ready;
+    
+    // CSR Read interface
+    logic i_csr_rd_ready;
+    logic [31:0] o_csr_rd_data;
+    logic o_csr_rd_valid;
     
     // Status and error interface
-    logic [7:0] o_status;
     logic o_busy;
     logic o_error;
-    logic [2:0] o_error_type;
     logic [3:0] o_cic_stage_status;
     logic [5:0] o_fir_tap_status;
     logic [4:0] o_halfband_tap_status;
@@ -110,13 +113,21 @@ module tb_ssemi_adc_decimator_top;
 
     // Configuration coverage
     covergroup config_cg @(posedge i_clk);
-        config_addr: coverpoint i_config_addr {
+        csr_wr_addr: coverpoint i_csr_addr {
             bins fir_coeff = {[0:63]};
-            bins halfband_coeff = {[64:96]};
-            bins reserved = {[97:255]};
+            bins halfband_coeff = {[64:95]};
+            bins status_regs = {[128:131]};
+            bins reserved = {[96:127], [132:255]};
         }
         
-        config_valid: coverpoint {i_config_valid, o_config_ready} {
+        csr_wr_valid: coverpoint {i_csr_wr_valid, o_csr_wr_ready} {
+            bins idle = {2'b00};
+            bins ready = {2'b01};
+            bins valid = {2'b10};
+            bins transfer = {2'b11};
+        }
+        
+        csr_rd_valid: coverpoint {i_csr_rd_ready, o_csr_rd_valid} {
             bins idle = {2'b00};
             bins ready = {2'b01};
             bins valid = {2'b10};
@@ -145,14 +156,15 @@ module tb_ssemi_adc_decimator_top;
         .i_data(i_data),
         .o_data(o_data),
         .o_valid(o_valid),
-        .i_config_valid(i_config_valid),
-        .i_config_addr(i_config_addr),
-        .i_config_data(i_config_data),
-        .o_config_ready(o_config_ready),
-        .o_status(o_status),
+        .i_csr_wr_valid(i_csr_wr_valid),
+        .i_csr_addr(i_csr_addr),
+        .i_csr_wr_data(i_csr_wr_data),
+        .o_csr_wr_ready(o_csr_wr_ready),
+        .i_csr_rd_ready(i_csr_rd_ready),
+        .o_csr_rd_data(o_csr_rd_data),
+        .o_csr_rd_valid(o_csr_rd_valid),
         .o_busy(o_busy),
         .o_error(o_error),
-        .o_error_type(o_error_type),
         .o_cic_stage_status(o_cic_stage_status),
         .o_fir_tap_status(o_fir_tap_status),
         .o_halfband_tap_status(o_halfband_tap_status)
@@ -189,9 +201,10 @@ module tb_ssemi_adc_decimator_top;
         i_enable = 0;
         i_valid = 0;
         i_data = 0;
-        i_config_valid = 0;
-        i_config_addr = 0;
-        i_config_data = 0;
+        i_csr_wr_valid = 0;
+        i_csr_addr = 0;
+        i_csr_wr_data = 0;
+        i_csr_rd_ready = 0;
         
         // Generate test data
         generate_test_data();
@@ -338,26 +351,26 @@ module tb_ssemi_adc_decimator_top;
             // Test FIR coefficient loading
             for (i = 0; i < FIR_TAPS; i = i + 1) begin
                 @(posedge i_clk);
-                i_config_valid = 1;
-                i_config_addr = i;
-                i_config_data = test_fir_coeff[i];
+                i_csr_wr_valid = 1;
+                i_csr_addr = i;
+                i_csr_wr_data = test_fir_coeff[i];
                 
-                while (!o_config_ready) @(posedge i_clk);
+                while (!o_csr_wr_ready) @(posedge i_clk);
             end
             
             // Test halfband coefficient loading
             for (i = 0; i < HALFBAND_TAPS; i = i + 1) begin
                 @(posedge i_clk);
-                i_config_valid = 1;
-                i_config_addr = i + 64; // Halfband coefficients start at address 64
-                i_config_data = test_halfband_coeff[i];
+                i_csr_wr_valid = 1;
+                i_csr_addr = i + 64; // Halfband coefficients start at address 64
+                i_csr_wr_data = test_halfband_coeff[i];
                 
-                while (!o_config_ready) @(posedge i_clk);
+                while (!o_csr_wr_ready) @(posedge i_clk);
             end
             
-            i_config_valid = 0;
-            i_config_addr = 0;
-            i_config_data = 0;
+            i_csr_wr_valid = 0;
+            i_csr_addr = 0;
+            i_csr_wr_data = 0;
             
             // Wait for configuration to take effect
             #(CLK_PERIOD * 50);
@@ -366,7 +379,7 @@ module tb_ssemi_adc_decimator_top;
                 $display("Configuration test PASSED");
                 success_count = success_count + 1;
             end else begin
-                $display("Configuration test FAILED - Error: %h", o_error_type);
+                $display("Configuration test FAILED - Error detected");
                 error_count = error_count + 1;
             end
         end
@@ -379,19 +392,19 @@ module tb_ssemi_adc_decimator_top;
             
             // Test invalid configuration address
             @(posedge i_clk);
-            i_config_valid = 1;
-            i_config_addr = 8'hFF; // Valid address
-            i_config_data = 32'h12345678;
+            i_csr_wr_valid = 1;
+            i_csr_addr = 8'hFF; // Valid address
+            i_csr_wr_data = 32'h12345678;
             
-            while (!o_config_ready) @(posedge i_clk);
+            while (!o_csr_wr_ready) @(posedge i_clk);
             
             @(posedge i_clk);
-            i_config_addr = 8'hFF + 1; // Invalid address
-            i_config_data = 32'h87654321;
+            i_csr_addr = 8'hFF + 1; // Invalid address
+            i_csr_wr_data = 32'h87654321;
             
             #(CLK_PERIOD * 10);
             
-            if (o_error && o_error_type == 3'b011) begin
+            if (o_error) begin
                 $display("Error detection test PASSED - Invalid config detected");
                 success_count = success_count + 1;
             end else begin
@@ -399,7 +412,7 @@ module tb_ssemi_adc_decimator_top;
                 error_count = error_count + 1;
             end
             
-            i_config_valid = 0;
+            i_csr_wr_valid = 0;
         end
     endtask
 
@@ -424,7 +437,7 @@ module tb_ssemi_adc_decimator_top;
             // Wait for overflow detection
             #(CLK_PERIOD * 100);
             
-            if (o_overflow || o_error_type == 3'b001) begin
+            if (o_error) begin
                 $display("Overflow test PASSED - Overflow detected");
                 success_count = success_count + 1;
             end else begin

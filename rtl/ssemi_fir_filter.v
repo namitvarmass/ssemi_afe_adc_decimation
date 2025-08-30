@@ -8,8 +8,33 @@
 //              Supports configurable taps, coefficient width, and data width
 //              Features coefficient update capability and overflow protection
 //              Optimized for high-speed operation with minimal resource usage
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for i_data and i_valid
+//   - Hold Time: 1ns minimum for i_data and i_valid
+//   - Output Delay: 8ns maximum for o_data and o_valid
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - Filter Latency: NUM_TAPS cycles (pipeline depth)
+//   - Coefficient Update: 1-cycle latency when i_coeff_valid asserted
+//   - Overflow Detection: 1-cycle latency
+//   - Saturation Logic: Combinational (no additional latency)
+//
+// Resource Requirements:
+//   - Registers: ~(NUM_TAPS * INPUT_DATA_WIDTH) + control registers
+//   - Combinational Logic: High (multiplier array + adder tree)
+//   - Memory: ~(NUM_TAPS * COEFF_WIDTH) for coefficients
+//   - Multipliers: NUM_TAPS (can be shared for lower frequencies)
+//
+// Coefficient Validation:
+//   - FIR coefficients: 18-bit signed values, range -131072 to +131071 (0x20000 to 0x1FFFF)
+//   - Coefficient saturation: Values exceeding range are clamped to min/max
+//   - Tap count validation: 4-256 taps with power-of-2 recommendation for efficiency
+//   - Coefficient update: Via CSR interface with immediate effect on filter response
+//   - Default coefficients: Optimized for 20kHz passband compensation and stopband attenuation
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 

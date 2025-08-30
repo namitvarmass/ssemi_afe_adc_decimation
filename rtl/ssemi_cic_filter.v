@@ -8,8 +8,30 @@
 //              Supports configurable stages, differential delay, and decimation factor
 //              Features overflow/underflow detection and saturation logic
 //              Optimized for high-speed operation with minimal resource usage
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for i_data and i_valid
+//   - Hold Time: 1ns minimum for i_data and i_valid
+//   - Output Delay: 8ns maximum for o_data and o_valid
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - Decimation Latency: 1-2 cycles depending on DECIMATION_FACTOR
+//   - Overflow Detection: 1-cycle latency
+//   - Saturation Logic: Combinational (no additional latency)
+//
+// Resource Requirements:
+//   - Registers: ~(CIC_STAGES * INPUT_DATA_WIDTH * 2) + control registers
+//   - Combinational Logic: Moderate (integrator and comb sections)
+//   - Memory: None (uses registers for delay lines)
+//
+// Coefficient Validation:
+//   - CIC filter uses no external coefficients (internal integrator/comb structure)
+//   - Decimation factor validation: 32-512 range with power-of-2 recommendation
+//   - Stage count validation: 1-8 stages for optimal performance
+//   - Differential delay validation: 1-4 samples for comb filter optimization
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 

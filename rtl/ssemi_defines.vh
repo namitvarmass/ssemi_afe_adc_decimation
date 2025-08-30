@@ -6,7 +6,7 @@
 //=============================================================================
 // Description: Shared parameters and constants for SSEMI ADC Decimator IP
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 

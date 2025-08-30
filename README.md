@@ -51,21 +51,26 @@ The SSEMI ADC Decimator is a comprehensive digital filter solution that combines
 | `o_data` | Output | 24 | Output data (24-bit signed) |
 | `o_valid` | Output | 1 | Output data valid signal |
 
-### **Configuration Interface**
+### **CSR Write Interface**
 | Signal | Direction | Width | Description |
 |--------|-----------|-------|-------------|
-| `i_config_valid` | Input | 1 | Configuration data valid |
-| `i_config_addr` | Input | 8 | Configuration address |
-| `i_config_data` | Input | 32 | Configuration data |
-| `o_config_ready` | Output | 1 | Configuration ready |
+| `i_csr_wr_valid` | Input | 1 | Write valid |
+| `i_csr_addr` | Input | 8 | Write address |
+| `i_csr_wr_data` | Input | 32 | Write data |
+| `o_csr_wr_ready` | Output | 1 | Write ready |
+
+### **CSR Read Interface**
+| Signal | Direction | Width | Description |
+|--------|-----------|-------|-------------|
+| `i_csr_rd_ready` | Input | 1 | Read ready |
+| `o_csr_rd_data` | Output | 32 | Read data |
+| `o_csr_rd_valid` | Output | 1 | Read valid |
 
 ### **Status and Error Interface**
 | Signal | Direction | Width | Description |
 |--------|-----------|-------|-------------|
-| `o_status` | Output | 8 | Status information |
 | `o_busy` | Output | 1 | Decimator busy |
-| `o_error` | Output | 1 | Error flag |
-| `o_error_type` | Output | 3 | Specific error type |
+| `o_error` | Output | 1 | Error interrupt |
 | `o_cic_stage_status` | Output | 4 | CIC stage status |
 | `o_fir_tap_status` | Output | 6 | FIR tap status |
 | `o_halfband_tap_status` | Output | 5 | Halfband tap status |
@@ -197,10 +202,48 @@ end
 ## 📊 **Performance Characteristics**
 
 ### **Timing Specifications**
-- **Maximum Frequency**: 100MHz
-- **Setup Time**: 2ns
-- **Hold Time**: 1ns
-- **Clock-to-Output**: 5ns
+- **Input Clock**: 100MHz typical, 200MHz maximum
+- **Setup Time**: 2ns minimum for all input signals
+- **Hold Time**: 1ns minimum for all input signals
+- **Output Delay**: 8ns maximum for all output signals
+- **Clock-to-Q**: 6ns maximum for registered outputs
+- **Reset Recovery**: 10ns minimum after reset deassertion
+- **CSR Read Access**: Same-cycle response (combinational)
+- **CSR Write Access**: One-cycle latency
+- **Data Path Latency**: 3-5 cycles depending on configuration
+
+### **Clock Domains**
+- **Primary Domain (i_clk)**: CIC filter, CSR interface, control logic
+- **FIR Domain (fir_clk)**: FIR filter (divided from i_clk)
+- **Halfband Domain (halfband_clk)**: Halfband filter (divided from fir_clk)
+
+### **CSR Address Map**
+```
+Configuration Registers (Read/Write):
+  0x00-0x3F: FIR Filter Coefficients (64 coefficients, 18-bit each)
+  0x40-0x60: Halfband Filter Coefficients (33 coefficients, 18-bit each)
+              Note: Only even addresses are used (odd taps = 0 for halfband)
+
+Status Registers (Read-Only):
+  0x80: Status Register (8-bit)
+        [7] - CIC stage active
+        [6] - FIR stage active  
+        [5] - Halfband stage active
+        [4] - Error flag
+        [3] - Overflow detected
+        [2] - Underflow detected
+        [1] - Invalid configuration
+        [0] - Coefficient range error
+  0x81: Busy Register (1-bit)
+        [0] - Decimator busy indicator
+  0x82: Error Type Register (3-bit)
+        [2:0] - Error type code
+  0x83: Error Register (1-bit)
+        [0] - Error interrupt flag
+
+Reserved Addresses:
+  0x84-0xFF: Reserved for future use (invalid access generates error)
+```
 
 ### **Resource Utilization (FPGA)**
 | Resource | CIC (5 stages) | FIR (64 taps) | Halfband (33 taps) | Total |
@@ -211,9 +254,11 @@ end
 | BRAMs | 0 | 2 | 1 | 3 |
 
 ### **Power Consumption**
-- **Dynamic Power**: ~50mW @ 100MHz
-- **Static Power**: ~5mW
-- **Clock Gating**: Supported for power optimization
+- **Dynamic Power**: ~50-100mW typical at 100MHz
+- **Leakage Power**: ~5-10mW typical
+- **Clock Gating**: Implemented for power efficiency
+- **Sleep Mode**: Available through i_enable signal
+- **Cascaded Clock Division**: Reduces dynamic power consumption
 
 ## 🧪 **Verification**
 
@@ -266,8 +311,13 @@ make coverage
 - **[Design Specification](docs/ssemi_adc_decimator-design_spec.md)**: Complete design specification
 - **[Integration Guide](integration/README.md)**: Integration guidelines
 
+### **Timing and Constraints**
+- **[Timing Constraints](constraints/ssemi_adc_decimator_timing.sdc)**: Comprehensive timing constraints file
+- **[Synthesis Constraints](constraints/ssemi_adc_decimator.sdc)**: Synthesis-specific constraints
+- **[FPGA Constraints](constraints/constraints.xdc)**: Xilinx FPGA constraints
+
 ### **API Reference**
-- **[Configuration Interface](docs/configuration-interface.md)**: Configuration register map
+- **[CSR Address Map](README.md#csr-address-map)**: Complete register map documentation
 - **[Error Codes](docs/error-codes.md)**: Error type definitions
 - **[Timing Diagrams](docs/timing-diagrams.md)**: Interface timing specifications
 

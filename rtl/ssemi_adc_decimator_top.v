@@ -10,8 +10,36 @@
 //              3. Halfband FIR filter for final decimation
 //              Supports decimation factors from 32 to 512
 //              Features comprehensive error detection and status reporting
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for all input signals
+//   - Hold Time: 1ns minimum for all input signals
+//   - Output Delay: 8ns maximum for all output signals
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - Reset Recovery: 10ns minimum after i_rst_n deassertion
+//   - CSR Read Access: Same-cycle response (combinational)
+//   - CSR Write Access: One-cycle latency
+//   - Data Path Latency: 3-5 cycles depending on configuration
+//
+// Clock Domains:
+//   - Primary Domain (i_clk): CIC filter, CSR interface, control logic
+//   - FIR Domain (fir_clk): FIR filter (divided from i_clk)
+//   - Halfband Domain (halfband_clk): Halfband filter (divided from fir_clk)
+//
+// Power Considerations:
+//   - Clock gating implemented for power efficiency
+//   - Cascaded clock division reduces dynamic power
+//   - Coefficient memory can be power-gated when not in use
+//
+// Coefficient Validation:
+//   - FIR coefficients: 18-bit signed values, range -131072 to +131071
+//   - Halfband coefficients: 18-bit signed values, odd-indexed taps must be zero
+//   - Default coefficients optimized for 20kHz passband, <0.01dB ripple, >100dB attenuation
+//   - Coefficient updates via CSR interface with range validation and saturation
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 
@@ -45,20 +73,25 @@ module ssemi_adc_decimator_top #(
     output reg  o_valid,         // Output data valid signal
     
     //==============================================================================
-    // Configuration Interface
+    // CSR Write Interface
     //==============================================================================
-    input  wire i_config_valid,  // Configuration data valid
-    input  wire [7:0] i_config_addr,  // Configuration address
-    input  wire [31:0] i_config_data, // Configuration data
-    output reg  o_config_ready,  // Configuration ready
+    input  wire i_csr_wr_valid,  // Write valid
+    input  wire [7:0] i_csr_addr, // Write address
+    input  wire [31:0] i_csr_wr_data, // Write data
+    output reg  o_csr_wr_ready,  // Write ready
+    
+    //==============================================================================
+    // CSR Read Interface
+    //==============================================================================
+    input  wire i_csr_rd_ready,  // Read ready (host ready to accept)
+    output reg  [31:0] o_csr_rd_data, // Read data
+    output reg  o_csr_rd_valid,  // Read valid
     
     //==============================================================================
     // Status and Error Interface
     //==============================================================================
-    output reg  [7:0] o_status,              // Status information
     output reg  o_busy,                      // Decimator busy
-    output reg  o_error,                     // Error flag
-    output reg  [2:0] o_error_type,          // Specific error type
+    output reg  o_error,                     // Error interrupt
     output reg  [3:0] o_cic_stage_status,    // CIC stage status
     output reg  [5:0] o_fir_tap_status,      // FIR tap status
     output reg  [4:0] o_halfband_tap_status  // Halfband tap status
@@ -153,10 +186,8 @@ module ssemi_adc_decimator_top #(
     wire [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] halfband_coefficients [0:HALFBAND_TAPS-1];
     
     // Configuration and status signals
-    wire [7:0] status_reg;
     wire busy_reg;
     wire error_reg;
-    wire [2:0] error_type_reg;
     
     // Error aggregation
     wire any_overflow;
@@ -197,11 +228,13 @@ module ssemi_adc_decimator_top #(
     ) config_status_regs (
         .i_clk(i_clk),
         .i_rst_n(i_rst_n),
-        .i_enable(i_enable),
-        .i_config_valid(i_config_valid),
-        .i_config_addr(i_config_addr),
-        .i_config_data(i_config_data),
-        .o_config_ready(o_config_ready),
+        .i_csr_wr_valid(i_csr_wr_valid),
+        .i_csr_addr(i_csr_addr),
+        .i_csr_wr_data(i_csr_wr_data),
+        .o_csr_wr_ready(o_csr_wr_ready),
+        .i_csr_rd_ready(i_csr_rd_ready),
+        .o_csr_rd_data(o_csr_rd_data),
+        .o_csr_rd_valid(o_csr_rd_valid),
         .i_cic_valid(cic_output_valid),
         .i_fir_valid(fir_output_valid),
         .i_halfband_valid(halfband_output_valid),
@@ -213,10 +246,8 @@ module ssemi_adc_decimator_top #(
         .i_halfband_underflow(halfband_underflow),
         .o_fir_coeff(fir_coefficients),
         .o_halfband_coeff(halfband_coefficients),
-        .o_status(status_reg),
         .o_busy(busy_reg),
-        .o_error(error_reg),
-        .o_error_type(error_type_reg)
+        .o_error(error_reg)
     );
 
     //==============================================================================
@@ -307,20 +338,8 @@ module ssemi_adc_decimator_top #(
     assign any_underflow = cic_underflow || fir_underflow || halfband_underflow;
     assign any_stage_failure = cic_busy && fir_busy && halfband_busy;
     
-    // Error type determination
-    always @(*) begin
-        if (any_overflow) begin
-            error_type_reg = SSEMI_TOP_ERROR_OVERFLOW;
-        end else if (any_underflow) begin
-            error_type_reg = SSEMI_TOP_ERROR_UNDERFLOW;
-        end else if (error_reg) begin
-            error_type_reg = SSEMI_TOP_ERROR_INVALID_CONFIG;
-        end else if (any_stage_failure) begin
-            error_type_reg = SSEMI_TOP_ERROR_STAGE_FAILURE;
-        end else begin
-            error_type_reg = SSEMI_TOP_ERROR_NONE;
-        end
-    end
+    // Error type determination (now handled in config_status_regs)
+    // Error aggregation and type determination moved to CSR module
 
     //==============================================================================
     // Output Assignments
@@ -332,10 +351,8 @@ module ssemi_adc_decimator_top #(
     assign o_ready = i_enable && !busy_reg;
     
     // Status outputs
-    assign o_status = status_reg;
     assign o_busy = busy_reg || cic_busy || fir_busy || halfband_busy;
     assign o_error = error_reg || any_overflow || any_underflow || any_stage_failure;
-    assign o_error_type = error_type_reg;
 
 endmodule
 

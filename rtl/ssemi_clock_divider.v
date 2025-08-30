@@ -5,9 +5,32 @@
 // Module Name: ssemi_clock_divider
 //=============================================================================
 // Description: Configurable clock divider for decimation stages
-//              Supports division ratios from 1 to SSEMI_CLK_DIV_MAX
+//              Supports division ratios from 2 to SSEMI_CLK_DIV_MAX
+//              Provides divided clock output with edge detection signals
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for i_enable and i_sync_reset
+//   - Hold Time: 1ns minimum for i_enable and i_sync_reset
+//   - Output Delay: 4ns maximum for o_clk_div
+//   - Clock-to-Q: 3ns maximum for o_clk_div_pos and o_clk_div_neg
+//   - Division Latency: 1 cycle (synchronous division)
+//   - Edge Detection: 1-cycle latency for pos/neg edge signals
+//   - Reset Recovery: 5ns minimum after i_rst_n deassertion
+//
+// Resource Requirements:
+//   - Registers: ~log2(CLK_DIV_RATIO) + control registers
+//   - Combinational Logic: Minimal (counter and edge detection)
+//   - Memory: None
+//
+// Coefficient Validation:
+//   - Clock division ratio: 2 to 8 (CLK_DIV_RATIO parameter)
+//   - Division ratio validation: Must be between 2 and SSEMI_CLK_DIV_MAX (8)
+//   - Power-of-2 recommendation: For optimal timing and resource usage
+//   - Cascaded division: Supports cascaded clock division for multi-stage decimation
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 

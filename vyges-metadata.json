@@ -1,7 +1,7 @@
 {
   "$schema": "https://vyges.com/schema/v1/vyges-metadata.schema.json",
   "x-version": "1.0.0",
-  "name": "ssemi/afe-adc-decimation",
+  "name": "ssemi/ssemi_afe_adc_decimation",
   "version": "1.0.0",
   "description": "Multi-stage ADC decimator with CIC, FIR, and halfband filters for high-performance analog front-end applications. Supports decimation factors from 32 to 512 with configurable filter stages optimized for 20kHz passband and >100dB stopband attenuation.",
   "license": "Apache-2.0",
@@ -10,7 +10,7 @@
   "design_type": ["digital"],
   "maturity": "prototype",
   "created": "2025-08-28T13:41:48Z",
-  "updated": "2025-08-29T07:06:38Z",
+  "updated": "2025-08-30T18:32:01Z",
   "source": {
     "type": "git",
     "url": "https://github.com/namitvarmass/ssemi_afe_adc_decimation",

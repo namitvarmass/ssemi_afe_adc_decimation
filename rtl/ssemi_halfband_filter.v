@@ -8,8 +8,35 @@
 //              Supports configurable taps, coefficient width, and data width
 //              Features coefficient update capability and overflow protection
 //              Optimized for 2:1 decimation with zero-valued odd taps
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for i_data and i_valid
+//   - Hold Time: 1ns minimum for i_data and i_valid
+//   - Output Delay: 8ns maximum for o_data and o_valid
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - Filter Latency: (NUM_TAPS+1)/2 cycles (effective taps due to zero odd taps)
+//   - Decimation Factor: 2:1 (output rate = input_rate/2)
+//   - Coefficient Update: 1-cycle latency when i_coeff_valid asserted
+//   - Overflow Detection: 1-cycle latency
+//   - Saturation Logic: Combinational (no additional latency)
+//
+// Resource Requirements:
+//   - Registers: ~((NUM_TAPS+1)/2 * INPUT_DATA_WIDTH) + control registers
+//   - Combinational Logic: Moderate (reduced due to zero odd taps)
+//   - Memory: ~((NUM_TAPS+1)/2 * COEFF_WIDTH) for coefficients
+//   - Multipliers: (NUM_TAPS+1)/2 (only non-zero coefficients)
+//
+// Coefficient Validation:
+//   - Halfband coefficients: 18-bit signed values, range -131072 to +131071 (0x20000 to 0x1FFFF)
+//   - Odd-indexed taps: Must be zero for halfband filter property (enforced by validation)
+//   - Even-indexed taps: Non-zero values for filter response optimization
+//   - Tap count validation: Must be odd (5-128 taps) for proper halfband structure
+//   - Coefficient saturation: Values exceeding range are clamped to min/max
+//   - Default coefficients: Optimized for 2:1 decimation with minimal passband ripple
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 

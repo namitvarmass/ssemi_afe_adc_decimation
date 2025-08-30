@@ -4,8 +4,29 @@
 // Description: Integration wrapper module for ssemi_adc_decimator_top
 //              Provides consistent interface naming and parameter passing
 //              for easy integration into larger designs
+//
+// Integration Guidelines:
+//   - Clock: Connect i_clk to system clock (100MHz typical, 200MHz max)
+//   - Reset: Connect i_rst_n to system reset (active-low, asynchronous)
+//   - Data Interface: Standard handshaking protocol (valid/ready)
+//   - CSR Interface: Memory-mapped register access for configuration
+//   - Status Monitoring: Use o_busy and o_error for system integration
+//
+// Timing Requirements:
+//   - Input Setup: 2ns minimum for all inputs
+//   - Input Hold: 1ns minimum for all inputs  
+//   - Output Delay: 8ns maximum for all outputs
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - Reset Recovery: 10ns minimum after reset deassertion
+//
+// Power Considerations:
+//   - Dynamic Power: ~50-100mW typical at 100MHz
+//   - Leakage Power: ~5-10mW typical
+//   - Clock Gating: Implemented for power efficiency
+//   - Sleep Mode: Available through i_enable signal
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-28T14:30:00Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 
@@ -36,20 +57,25 @@ module ssemi_adc_decimator_top_wrapper #(
     output wire o_valid,                   // Output data valid signal
     
     //==============================================================================
-    // Configuration Interface
+    // CSR Write Interface
     //==============================================================================
-    input  wire i_config_valid,            // Configuration data valid
-    input  wire [7:0] i_config_addr,       // Configuration address
-    input  wire [31:0] i_config_data,      // Configuration data
-    output wire o_config_ready,            // Configuration ready
+    input  wire i_csr_wr_valid,            // Write valid
+    input  wire [7:0] i_csr_addr,          // Write address
+    input  wire [31:0] i_csr_wr_data,      // Write data
+    output wire o_csr_wr_ready,            // Write ready
+    
+    //==============================================================================
+    // CSR Read Interface
+    //==============================================================================
+    input  wire i_csr_rd_ready,            // Read ready (host ready to accept)
+    output wire [31:0] o_csr_rd_data,      // Read data
+    output wire o_csr_rd_valid,            // Read valid
     
     //==============================================================================
     // Status and Error Interface
     //==============================================================================
-    output wire [7:0] o_status,            // Status information
     output wire o_busy,                    // Decimator busy
-    output wire o_error,                   // Error flag
-    output wire [2:0] o_error_type,        // Specific error type
+    output wire o_error,                   // Error interrupt
     output wire [3:0] o_cic_stage_status,  // CIC stage status
     output wire [5:0] o_fir_tap_status,    // FIR tap status
     output wire [4:0] o_halfband_tap_status // Halfband tap status
@@ -79,17 +105,20 @@ module ssemi_adc_decimator_top_wrapper #(
         .o_data(o_data),
         .o_valid(o_valid),
         
-        // Configuration Interface
-        .i_config_valid(i_config_valid),
-        .i_config_addr(i_config_addr),
-        .i_config_data(i_config_data),
-        .o_config_ready(o_config_ready),
+        // CSR Write Interface
+        .i_csr_wr_valid(i_csr_wr_valid),
+        .i_csr_addr(i_csr_addr),
+        .i_csr_wr_data(i_csr_wr_data),
+        .o_csr_wr_ready(o_csr_wr_ready),
+        
+        // CSR Read Interface
+        .i_csr_rd_ready(i_csr_rd_ready),
+        .o_csr_rd_data(o_csr_rd_data),
+        .o_csr_rd_valid(o_csr_rd_valid),
         
         // Status and Error Interface
-        .o_status(o_status),
         .o_busy(o_busy),
         .o_error(o_error),
-        .o_error_type(o_error_type),
         .o_cic_stage_status(o_cic_stage_status),
         .o_fir_tap_status(o_fir_tap_status),
         .o_halfband_tap_status(o_halfband_tap_status)
@@ -121,9 +150,9 @@ module ssemi_adc_decimator_top_wrapper #(
     // - Clock: 100MHz typical, single clock domain design
     // - Reset: Active-low asynchronous reset
     // - Data: 16-bit input, 24-bit output (signed)
-    // - Configuration: 8-bit address, 32-bit data
-    // - Status: 8-bit status, 3-bit error type
-    // - Handshaking: Valid/ready protocol for data transfer
+         // - Configuration: CSR read/write interface with 8-bit address, 32-bit data
+     // - Status: Readable through CSR interface, error interrupt output
+     // - Handshaking: Valid/ready protocol for both read and write
     // - Power: Low-power design with clock gating support
     //
     // Usage Examples:

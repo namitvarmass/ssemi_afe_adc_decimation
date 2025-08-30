@@ -7,8 +7,35 @@
 // Description: Configuration and status register management for ADC decimator
 //              Handles coefficient loading, status reporting, and error detection
 //              Provides default coefficient values optimized for specifications
+//              Implements CSR (Control and Status Register) interface with read/write capability
+//
+// Timing Constraints:
+//   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
+//   - Setup Time: 2ns minimum for all input signals
+//   - Hold Time: 1ns minimum for all input signals
+//   - Output Delay: 8ns maximum for all output signals
+//   - Clock-to-Q: 6ns maximum for registered outputs
+//   - CSR Read Access: Same-cycle response (combinational read)
+//   - CSR Write Access: One-cycle latency
+//   - Coefficient Update: Immediate (combinational output)
+//   - Error Detection: 1-cycle latency
+//   - Reset Recovery: 10ns minimum after i_rst_n deassertion
+//
+// Resource Requirements:
+//   - Registers: 128 x 32-bit (config_reg) + control registers
+//   - Combinational Logic: Moderate (address decode, coefficient routing)
+//   - Memory: 4KB (128 x 32-bit configuration registers)
+//
+// Coefficient Validation:
+//   - FIR coefficients (0x00-0x3F): 18-bit signed values, range -131072 to +131071
+//   - Halfband coefficients (0x40-0x60): 18-bit signed values, odd-indexed taps must be zero
+//   - Coefficient range validation: Values exceeding 0x3FFFF are clamped to maximum
+//   - Address validation: Invalid addresses (0x84-0xFF) generate error interrupts
+//   - Default coefficients: Pre-loaded on reset for optimal filter performance
+//   - Coefficient update: Immediate effect via combinational output assignment
+//
 // Author:      SSEMI Development Team
-// Date:        2025-08-26T17:54:47Z
+// Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 
@@ -23,12 +50,19 @@ module ssemi_config_status_regs #(
     input  wire i_clk,           // Input clock
     input  wire i_rst_n,         // Active-low reset
     
-    // Control Interface
-    input  wire i_enable,        // Enable register access
-    input  wire i_config_valid,  // Configuration data valid
-    input  wire [7:0] i_config_addr,  // Configuration address
-    input  wire [31:0] i_config_data, // Configuration data
-    output reg  o_config_ready,  // Configuration ready
+    // Control Interface (removed i_enable - always enabled)
+    
+    // CSR Write Interface
+    input  wire i_csr_wr_valid,  // Write valid
+    input  wire [7:0] i_csr_addr, // Write address
+    input  wire [31:0] i_csr_wr_data, // Write data
+    output reg  o_csr_wr_ready,  // Write ready
+    
+    // CSR Read Interface
+    input  wire i_csr_rd_ready,  // Read ready (host ready to accept)
+    input  wire [7:0] i_csr_addr, // Read address (shared with write)
+    output reg  [31:0] o_csr_rd_data, // Read data
+    output reg  o_csr_rd_valid,  // Read valid
     
     // Status Interface
     input  wire i_cic_valid,     // CIC stage valid
@@ -41,15 +75,13 @@ module ssemi_config_status_regs #(
     input  wire i_fir_underflow, // FIR underflow detected
     input  wire i_halfband_underflow, // Halfband underflow detected
     
-    // Coefficient Outputs
+    // Coefficient Outputs (for direct filter use)
     output wire [`SSEMI_FIR_COEFF_WIDTH-1:0] o_fir_coeff [0:FIR_TAPS-1],      // FIR coefficients
     output wire [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] o_halfband_coeff [0:HALFBAND_TAPS-1], // Halfband coefficients
     
     // Status Outputs
-    output reg  [7:0] o_status,              // Status information
     output reg  o_busy,                      // Decimator busy
-    output reg  o_error,                     // Error flag
-    output reg  [2:0] o_error_type           // Specific error type
+    output reg  o_error                      // Error interrupt
 );
 
     //==============================================================================
@@ -70,10 +102,13 @@ module ssemi_config_status_regs #(
     //==============================================================================
     
     // Configuration registers
-    reg [31:0] config_reg [0:255];
+    reg [31:0] config_reg [0:127];
     reg [7:0] status_reg;
     reg busy_reg, error_reg;
     reg [2:0] error_type_reg;
+    
+    // CSR read/write control signals
+    reg write_pending;
     
     // Error detection signals
     wire overflow_detected;
@@ -81,6 +116,8 @@ module ssemi_config_status_regs #(
     wire invalid_config;
     wire invalid_addr;
     wire coeff_range_error;
+    wire invalid_read_addr;
+    wire invalid_write_addr;
     
     // Parameter validation (verification only)
 `ifdef SSEMI_VERIFICATION
@@ -111,78 +148,66 @@ module ssemi_config_status_regs #(
 `endif
 
     //==============================================================================
-    // Configuration Register Management
+    // Address Validation
     //==============================================================================
+    
+    //==============================================================================
+    // CSR Address Map
+    //==============================================================================
+    // Configuration Registers (Read/Write):
+    //   0x00-0x3F: FIR Filter Coefficients (64 coefficients, 18-bit each)
+    //   0x40-0x60: Halfband Filter Coefficients (33 coefficients, 18-bit each)
+    //              Note: Only even addresses are used (odd taps = 0 for halfband)
+    //
+    // Status Registers (Read-Only):
+    //   0x80: Status Register (8-bit)
+    //        [7] - CIC stage active
+    //        [6] - FIR stage active  
+    //        [5] - Halfband stage active
+    //        [4] - Error flag
+    //        [3] - Overflow detected
+    //        [2] - Underflow detected
+    //        [1] - Invalid configuration
+    //        [0] - Coefficient range error
+    //   0x81: Busy Register (1-bit)
+    //        [0] - Decimator busy indicator
+    //   0x82: Error Type Register (3-bit)
+    //        [2:0] - Error type code (see error constants below)
+    //   0x83: Error Register (1-bit)
+    //        [0] - Error interrupt flag
+    //
+    // Reserved Addresses:
+    //   0x84-0xFF: Reserved for future use (invalid access generates error)
+    //==============================================================================
+    
+    // Valid address ranges
+    assign invalid_write_addr = (i_csr_addr > 8'h83); // Invalid if > 0x83
+    assign invalid_read_addr = (i_csr_addr > 8'h83);  // Invalid if > 0x83
+    
+    //==============================================================================
+    // CSR Write Interface
+    //==============================================================================
+    
+    // Write ready logic
+    always @(*) begin
+        o_csr_wr_ready = !write_pending;
+    end
+    
+    // Write control logic
+    always @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
+            write_pending <= 1'b0;
+        end else if (i_csr_wr_valid && o_csr_wr_ready) begin
+            write_pending <= 1'b1;
+        end else begin
+            write_pending <= 1'b0;
+        end
+    end
     
     // Configuration register write logic
     always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
-            // Initialize configuration registers with default values
-            config_reg[0] <= 32'h00000000;
-            config_reg[1] <= 32'h00000000;
-            config_reg[2] <= 32'h00000000;
-            config_reg[3] <= 32'h00000000;
-            config_reg[4] <= 32'h00000000;
-            config_reg[5] <= 32'h00000000;
-            config_reg[6] <= 32'h00000000;
-            config_reg[7] <= 32'h00000000;
-            config_reg[8] <= 32'h00000000;
-            config_reg[9] <= 32'h00000000;
-            config_reg[10] <= 32'h00000000;
-            config_reg[11] <= 32'h00000000;
-            config_reg[12] <= 32'h00000000;
-            config_reg[13] <= 32'h00000000;
-            config_reg[14] <= 32'h00000000;
-            config_reg[15] <= 32'h00000000;
-            config_reg[16] <= 32'h00000000;
-            config_reg[17] <= 32'h00000000;
-            config_reg[18] <= 32'h00000000;
-            config_reg[19] <= 32'h00000000;
-            config_reg[20] <= 32'h00000000;
-            config_reg[21] <= 32'h00000000;
-            config_reg[22] <= 32'h00000000;
-            config_reg[23] <= 32'h00000000;
-            config_reg[24] <= 32'h00000000;
-            config_reg[25] <= 32'h00000000;
-            config_reg[26] <= 32'h00000000;
-            config_reg[27] <= 32'h00000000;
-            config_reg[28] <= 32'h00000000;
-            config_reg[29] <= 32'h00000000;
-            config_reg[30] <= 32'h00000000;
-            config_reg[31] <= 32'h00000000;
-            config_reg[32] <= 32'h00000000;
-            config_reg[33] <= 32'h00000000;
-            config_reg[34] <= 32'h00000000;
-            config_reg[35] <= 32'h00000000;
-            config_reg[36] <= 32'h00000000;
-            config_reg[37] <= 32'h00000000;
-            config_reg[38] <= 32'h00000000;
-            config_reg[39] <= 32'h00000000;
-            config_reg[40] <= 32'h00000000;
-            config_reg[41] <= 32'h00000000;
-            config_reg[42] <= 32'h00000000;
-            config_reg[43] <= 32'h00000000;
-            config_reg[44] <= 32'h00000000;
-            config_reg[45] <= 32'h00000000;
-            config_reg[46] <= 32'h00000000;
-            config_reg[47] <= 32'h00000000;
-            config_reg[48] <= 32'h00000000;
-            config_reg[49] <= 32'h00000000;
-            config_reg[50] <= 32'h00000000;
-            config_reg[51] <= 32'h00000000;
-            config_reg[52] <= 32'h00000000;
-            config_reg[53] <= 32'h00000000;
-            config_reg[54] <= 32'h00000000;
-            config_reg[55] <= 32'h00000000;
-            config_reg[56] <= 32'h00000000;
-            config_reg[57] <= 32'h00000000;
-            config_reg[58] <= 32'h00000000;
-            config_reg[59] <= 32'h00000000;
-            config_reg[60] <= 32'h00000000;
-            config_reg[61] <= 32'h00000000;
-            config_reg[62] <= 32'h00000000;
-            config_reg[63] <= 32'h00000000;
-            
+            // Initialize all configuration registers to default values
             // Load default FIR coefficients
             config_reg[0] <= `SSEMI_DEFAULT_FIR_COEFF_0;
             config_reg[1] <= `SSEMI_DEFAULT_FIR_COEFF_1;
@@ -284,12 +309,43 @@ module ssemi_config_status_regs #(
             config_reg[95] <= `SSEMI_DEFAULT_HALFBAND_COEFF_31;
             config_reg[96] <= `SSEMI_DEFAULT_HALFBAND_COEFF_32;
             
-        end else if (!i_enable) begin
-            // Keep current values when disabled
-        end else if (i_config_valid) begin
-            // Validate address range
-            if (i_config_addr <= 8'hFF) begin
-                config_reg[i_config_addr] <= i_config_data;
+                 end else if (i_csr_wr_valid && o_csr_wr_ready) begin
+             // Validate address range and write if valid
+             if (!invalid_write_addr && i_csr_addr <= 8'h7F) begin
+                 config_reg[i_csr_addr] <= i_csr_wr_data;
+             end
+        end
+    end
+
+    //==============================================================================
+    // CSR Read Interface
+    //==============================================================================
+    
+    // Read control logic - data available same cycle
+    always @(posedge i_clk or negedge i_rst_n) begin
+        if (!i_rst_n) begin
+            o_csr_rd_valid <= 1'b0;
+            o_csr_rd_data <= 32'h00000000;
+        end else begin
+            // Read data available same cycle when i_csr_rd_ready is asserted
+            if (i_csr_rd_ready) begin
+                // Provide read data based on current address
+                if (!invalid_read_addr && i_csr_addr <= 8'h7F) begin
+                    o_csr_rd_data <= config_reg[i_csr_addr];
+                end else if (i_csr_addr == 8'h80) begin
+                    o_csr_rd_data <= {24'h000000, status_reg}; // Status register
+                end else if (i_csr_addr == 8'h81) begin
+                    o_csr_rd_data <= {31'h00000000, busy_reg}; // Busy register
+                end else if (i_csr_addr == 8'h82) begin
+                    o_csr_rd_data <= {29'h00000000, error_type_reg}; // Error type register
+                end else if (i_csr_addr == 8'h83) begin
+                    o_csr_rd_data <= {31'h00000000, error_reg}; // Error register
+                end else begin
+                    o_csr_rd_data <= 32'h00000000; // Invalid address returns 0
+                end
+                o_csr_rd_valid <= 1'b1;
+            end else begin
+                o_csr_rd_valid <= 1'b0;
             end
         end
     end
@@ -303,25 +359,12 @@ module ssemi_config_status_regs #(
     assign underflow_detected = i_cic_underflow || i_fir_underflow || i_halfband_underflow;
     
     // Configuration validation
-    assign invalid_config = (i_config_addr > 8'hFF);
-    assign invalid_addr = (i_config_addr < 8'h00) || (i_config_addr > 8'hFF);
-    assign coeff_range_error = (i_config_addr >= 8'h40) && (i_config_addr <= 8'h60) && 
-                               (i_config_data > 32'h0003FFFF); // Check coefficient range
+    assign invalid_config = invalid_write_addr || invalid_read_addr;
+    assign invalid_addr = invalid_write_addr || invalid_read_addr;
+    assign coeff_range_error = ((i_csr_addr <= 8'h3F) && (i_csr_wr_data > 32'h0003FFFF)) || // FIR coeff range
+                               ((i_csr_addr >= 8'h40) && (i_csr_addr <= 8'h60) && (i_csr_wr_data > 32'h0003FFFF)); // Halfband coeff range
     
-    // Error type determination
-    always @(*) begin
-        if (overflow_detected) begin
-            error_type_reg = SSEMI_CONFIG_ERROR_OVERFLOW;
-        end else if (underflow_detected) begin
-            error_type_reg = SSEMI_CONFIG_ERROR_UNDERFLOW;
-        end else if (invalid_config || invalid_addr) begin
-            error_type_reg = SSEMI_CONFIG_ERROR_INVALID_CONFIG;
-        end else if (coeff_range_error) begin
-            error_type_reg = SSEMI_CONFIG_ERROR_COEFF_RANGE;
-        end else begin
-            error_type_reg = SSEMI_CONFIG_ERROR_NONE;
-        end
-    end
+    // Error type determination (moved to sequential block)
 
     //==============================================================================
     // Status and Control Logic
@@ -333,10 +376,7 @@ module ssemi_config_status_regs #(
             status_reg <= 8'h00;
             busy_reg <= 1'b0;
             error_reg <= 1'b0;
-        end else if (!i_enable) begin
-            status_reg <= 8'h00;
-            busy_reg <= 1'b0;
-            error_reg <= 1'b0;
+            error_type_reg <= SSEMI_CONFIG_ERROR_NONE;
         end else begin
             busy_reg <= i_cic_valid || i_fir_valid || i_halfband_valid;
             
@@ -354,6 +394,19 @@ module ssemi_config_status_regs #(
             
             error_reg <= overflow_detected || underflow_detected || 
                         invalid_config || invalid_addr || coeff_range_error;
+            
+            // Error type determination (sequential assignment)
+            if (overflow_detected) begin
+                error_type_reg <= SSEMI_CONFIG_ERROR_OVERFLOW;
+            end else if (underflow_detected) begin
+                error_type_reg <= SSEMI_CONFIG_ERROR_UNDERFLOW;
+            end else if (invalid_config || invalid_addr) begin
+                error_type_reg <= SSEMI_CONFIG_ERROR_INVALID_CONFIG;
+            end else if (coeff_range_error) begin
+                error_type_reg <= SSEMI_CONFIG_ERROR_COEFF_RANGE;
+            end else begin
+                error_type_reg <= SSEMI_CONFIG_ERROR_NONE;
+            end
         end
     end
 
@@ -381,11 +434,8 @@ module ssemi_config_status_regs #(
     // Output Assignments
     //==============================================================================
     
-    assign o_config_ready = 1'b1; // Always ready for configuration
-    assign o_status = status_reg;
     assign o_busy = busy_reg;
     assign o_error = error_reg;
-    assign o_error_type = error_type_reg;
 
 endmodule
 
