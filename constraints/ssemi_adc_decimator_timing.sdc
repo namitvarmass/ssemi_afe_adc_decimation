@@ -4,6 +4,13 @@
 # Description: Comprehensive timing constraints for SSEMI ADC Decimator IP
 #              Includes clock definitions, input/output delays, and exceptions
 #              Optimized for 100MHz operation with 200MHz maximum capability
+#
+# Clock Domain Crossing (CDC):
+#   - For detailed CDC constraints and synchronization requirements,
+#     see ssemi_adc_decimator_cdc.sdc
+#   - This design uses three clock domains: i_clk, fir_clk, halfband_clk
+#   - All CDC paths require proper synchronization in RTL implementation
+#
 # Author:      SSEMI Development Team
 # Date:        2025-08-30T18:32:01Z
 # License:     Apache-2.0

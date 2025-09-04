@@ -144,7 +144,7 @@ module my_design (
 );
 
     // ADC Decimator instantiation
-    ssemi_adc_decimator_top #(
+    ssemi_adc_decimator_sys_top #(
         .CIC_STAGES(5),
         .FIR_TAPS(64),
         .HALFBAND_TAPS(33),
@@ -313,6 +313,7 @@ make coverage
 
 ### **Timing and Constraints**
 - **[Timing Constraints](constraints/ssemi_adc_decimator_timing.sdc)**: Comprehensive timing constraints file
+- **[CDC Constraints](constraints/ssemi_adc_decimator_cdc.sdc)**: Clock domain crossing constraints and synchronization
 - **[Synthesis Constraints](constraints/ssemi_adc_decimator.sdc)**: Synthesis-specific constraints
 - **[FPGA Constraints](constraints/constraints.xdc)**: Xilinx FPGA constraints
 

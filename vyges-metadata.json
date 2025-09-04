@@ -21,7 +21,7 @@
   },
   "sourceFiles": [
     {
-      "path": "rtl/ssemi_adc_decimator_top.v",
+              "path": "rtl/ssemi_adc_decimator_sys_top.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -99,7 +99,7 @@
       "block": "ssemi"
     },
     {
-      "path": "integration/ssemi_adc_decimator_top_wrapper.v",
+              "path": "integration/ssemi_adc_decimator_sys_top_wrapper.v",
       "type": "integration",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -107,7 +107,7 @@
       "block": "ssemi"
     },
     {
-      "path": "tb/sv_tb/tb_ssemi_adc_decimator_top.v",
+              "path": "tb/sv_tb/tb_ssemi_adc_decimator_sys_top.v",
       "type": "testbench",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -164,6 +164,14 @@
     },
     {
       "path": "constraints/constraints.xdc",
+      "type": "constraint",
+      "owner": "SSEMI Development Team",
+      "version": "1.0.0",
+      "license": "Apache-2.0",
+      "block": "ssemi"
+    },
+    {
+      "path": "constraints/ssemi_adc_decimator_cdc.sdc",
       "type": "constraint",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -348,7 +356,7 @@
       "code": 90,
       "toggle": 100
     },
-    "testbench": "tb/sv_tb/tb_ssemi_adc_decimator_top.v",
+            "testbench": "tb/sv_tb/tb_ssemi_adc_decimator_sys_top.v",
     "testcases": [
       "Basic functionality test",
       "Parameter validation test",

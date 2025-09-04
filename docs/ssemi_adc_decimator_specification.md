@@ -60,7 +60,7 @@ The design uses a single input clock with internal clock dividers for each stage
 ## Module Hierarchy
 
 ```
-ssemi_adc_decimator_top
+ssemi_adc_decimator_sys_top
 ├── ssemi_clock_divider (3 instances)
 ├── ssemi_cic_filter
 ├── ssemi_fir_filter
@@ -197,7 +197,7 @@ parameter OUTPUT_WIDTH = 24;              // Output data width
 
 ### Basic Instantiation
 ```verilog
-ssemi_adc_decimator_top #(
+ssemi_adc_decimator_sys_top #(
     .CIC_DECIMATION_FACTOR(64),
     .CIC_STAGES(5),
     .FIR_TAPS(64),
@@ -234,11 +234,11 @@ rtl/
 ├── ssemi_cic_filter.v          # CIC filter module
 ├── ssemi_fir_filter.v          # FIR filter module
 ├── ssemi_halfband_filter.v     # Halfband filter module
-└── ssemi_adc_decimator_top.v   # Top-level wrapper
+└── ssemi_adc_decimator_sys_top.v   # Top-level wrapper
 
 tb/
 ├── sv_tb/
-│   └── tb_ssemi_adc_decimator_top.v  # Testbench
+│   └── tb_ssemi_adc_decimator_sys_top.v  # Testbench
 └── Makefile                    # Simulation makefile
 
 docs/

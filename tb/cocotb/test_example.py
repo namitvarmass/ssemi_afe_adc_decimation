@@ -1,7 +1,7 @@
 #=============================================================================
 # Cocotb Test for SSEMI ADC Decimator
 #=============================================================================
-# Description: Comprehensive functional test for ssemi_adc_decimator_top
+# Description: Comprehensive functional test for ssemi_adc_decimator_sys_top
 #              Tests reset behavior, data flow, configuration, error detection,
 #              and status monitoring for the multi-stage ADC decimator
 # Author:      SSEMI Development Team

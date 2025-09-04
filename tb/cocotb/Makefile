@@ -25,10 +25,10 @@ VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_cic_filter.v
 VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_fir_filter.v
 VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_halfband_filter.v
 VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_config_status_regs.v
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_top.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_sys_top.v
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
-TOPLEVEL = ssemi_adc_decimator_top
+TOPLEVEL = ssemi_adc_decimator_sys_top
 
 # MODULE is the basename of the Python test file
 MODULE = test_example
@@ -190,7 +190,7 @@ help:
 	@echo ""
 	@echo "Configuration variables:"
 	@echo "  SIM                    - Simulator to use (icarus, verilator, vcs, modelsim)"
-	@echo "  TOPLEVEL               - Top-level module name (ssemi_adc_decimator_top)"
+	@echo "  TOPLEVEL               - Top-level module name (ssemi_adc_decimator_sys_top)"
 	@echo "  MODULE                 - Python test module name"
 	@echo ""
 	@echo "Cocotb Status:"

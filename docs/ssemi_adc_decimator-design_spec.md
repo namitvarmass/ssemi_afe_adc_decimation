@@ -25,7 +25,7 @@ This document provides the detailed design specification for the SSEMI ADC Decim
 
 ## Design Architecture
 
-### Top-Level Module: `ssemi_adc_decimator_top`
+### Top-Level Module: `ssemi_adc_decimator_sys_top`
 
 **Parameters**:
 - `CIC_STAGES`: Number of CIC filter stages (1-8)

@@ -27,10 +27,10 @@ RTL_SOURCES = \
 	$(RTL_DIR)/ssemi_cic_filter.v \
 	$(RTL_DIR)/ssemi_fir_filter.v \
 	$(RTL_DIR)/ssemi_halfband_filter.v \
-	$(RTL_DIR)/ssemi_adc_decimator_top.v
+	$(RTL_DIR)/ssemi_adc_decimator_sys_top.v
 
 TB_SOURCES = \
-	$(TB_DIR)/sv_tb/tb_ssemi_adc_decimator_top.v
+	$(TB_DIR)/sv_tb/tb_ssemi_adc_decimator_sys_top.v
 
 # Simulation targets
 SIM_TARGET = ssemi_adc_decimator_sim

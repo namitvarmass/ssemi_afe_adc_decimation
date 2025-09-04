@@ -1,7 +1,7 @@
 #=============================================================================
 # Cocotb Test for SSEMI ADC Decimator - Data Flow
 #=============================================================================
-# Description: Test basic data flow through ssemi_adc_decimator_top
+# Description: Test basic data flow through ssemi_adc_decimator_sys_top
 # Author:      SSEMI Development Team
 # Date:        2025-08-29T07:06:38Z
 # License:     Apache-2.0
