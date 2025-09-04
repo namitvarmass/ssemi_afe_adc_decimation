@@ -1,11 +1,11 @@
-`ifndef SSEMI_CLOCK_DIVIDER_V
-`define SSEMI_CLOCK_DIVIDER_V
+`ifndef SSEMI_ADC_DECIMATOR_CLOCK_DIVIDER_V
+`define SSEMI_ADC_DECIMATOR_CLOCK_DIVIDER_V
 
 //=============================================================================
 // Module Name: ssemi_clock_divider
 //=============================================================================
 // Description: Configurable clock divider for decimation stages
-//              Supports division ratios from 2 to SSEMI_CLK_DIV_MAX
+//              Supports division ratios from 2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX
 //              Provides divided clock output with edge detection signals
 //
 // Timing Constraints:
@@ -25,7 +25,7 @@
 //
 // Coefficient Validation:
 //   - Clock division ratio: 2 to 8 (CLK_DIV_RATIO parameter)
-//   - Division ratio validation: Must be between 2 and SSEMI_CLK_DIV_MAX (8)
+//   - Division ratio validation: Must be between 2 and SSEMI_ADC_DECIMATOR_CLK_DIV_MAX (8)
 //   - Power-of-2 recommendation: For optimal timing and resource usage
 //   - Cascaded division: Supports cascaded clock division for multi-stage decimation
 //
@@ -38,7 +38,7 @@
 `include "ssemi_defines.vh"
 
 module ssemi_clock_divider #(
-    parameter CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_CLK_DIV_MAX)
+    parameter CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX)
 ) (
     // Clock and Reset
     input  wire i_clk,           // Input clock
@@ -55,14 +55,14 @@ module ssemi_clock_divider #(
 );
 
     // Internal signals
-    reg [`SSEMI_CLK_DIV_MAX-1:0] clk_counter;
+    reg [`SSEMI_ADC_DECIMATOR_CLK_DIV_MAX-1:0] clk_counter;
     reg clk_div_reg;
     reg clk_div_pos_reg, clk_div_neg_reg;
     
     // Parameter validation
     initial begin
-        if (CLK_DIV_RATIO < 2 || CLK_DIV_RATIO > `SSEMI_CLK_DIV_MAX) begin
-            $error("CLK_DIV_RATIO must be between 2 and %d", `SSEMI_CLK_DIV_MAX);
+        if (CLK_DIV_RATIO < 2 || CLK_DIV_RATIO > `SSEMI_ADC_DECIMATOR_CLK_DIV_MAX) begin
+            $error("CLK_DIV_RATIO must be between 2 and %d", `SSEMI_ADC_DECIMATOR_CLK_DIV_MAX);
         end
     end
     

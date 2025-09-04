@@ -1,5 +1,5 @@
-`ifndef SSEMI_CONFIG_STATUS_REGS_V
-`define SSEMI_CONFIG_STATUS_REGS_V
+`ifndef SSEMI_ADC_DECIMATOR_CONFIG_STATUS_REGS_V
+`define SSEMI_ADC_DECIMATOR_CONFIG_STATUS_REGS_V
 
 //=============================================================================
 // Module Name: ssemi_config_status_regs
@@ -43,8 +43,8 @@
 `include "ssemi_defines.vh"
 
 module ssemi_config_status_regs #(
-    parameter FIR_TAPS = `SSEMI_FIR_TAPS,
-    parameter HALFBAND_TAPS = `SSEMI_HALFBAND_TAPS
+    parameter FIR_TAPS = `SSEMI_ADC_DECIMATOR_FIR_TAPS,
+    parameter HALFBAND_TAPS = `SSEMI_ADC_DECIMATOR_HALFBAND_TAPS
 ) (
     // Clock and Reset
     input  wire i_clk,           // Input clock
@@ -76,8 +76,8 @@ module ssemi_config_status_regs #(
     input  wire i_halfband_underflow, // Halfband underflow detected
     
     // Coefficient Outputs (for direct filter use)
-    output wire [`SSEMI_FIR_COEFF_WIDTH-1:0] o_fir_coeff [0:FIR_TAPS-1],      // FIR coefficients
-    output wire [`SSEMI_HALFBAND_COEFF_WIDTH-1:0] o_halfband_coeff [0:HALFBAND_TAPS-1], // Halfband coefficients
+    output wire [`SSEMI_ADC_DECIMATOR_FIR_COEFF_WIDTH-1:0] o_fir_coeff [0:FIR_TAPS-1],      // FIR coefficients
+    output wire [`SSEMI_ADC_DECIMATOR_HALFBAND_COEFF_WIDTH-1:0] o_halfband_coeff [0:HALFBAND_TAPS-1], // Halfband coefficients
     
     // Status Outputs
     output reg  o_busy,                      // Decimator busy
@@ -88,14 +88,14 @@ module ssemi_config_status_regs #(
     // Error Type Constants
     //==============================================================================
     // Error type constants (replacing enum)
-    parameter SSEMI_CONFIG_ERROR_NONE = 3'b000;
-    parameter SSEMI_CONFIG_ERROR_OVERFLOW = 3'b001;
-    parameter SSEMI_CONFIG_ERROR_UNDERFLOW = 3'b010;
-    parameter SSEMI_CONFIG_ERROR_INVALID_CONFIG = 3'b011;
-    parameter SSEMI_CONFIG_ERROR_INVALID_ADDR = 3'b100;
-    parameter SSEMI_CONFIG_ERROR_COEFF_RANGE = 3'b101;
-    parameter SSEMI_CONFIG_ERROR_RESERVED1 = 3'b110;
-    parameter SSEMI_CONFIG_ERROR_RESERVED2 = 3'b111;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_NONE = 3'b000;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_INVALID_CONFIG = 3'b011;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_INVALID_ADDR = 3'b100;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_COEFF_RANGE = 3'b101;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_RESERVED1 = 3'b110;
+    parameter SSEMI_ADC_DECIMATOR_CONFIG_ERROR_RESERVED2 = 3'b111;
 
     //==============================================================================
     // Internal Signals and Registers

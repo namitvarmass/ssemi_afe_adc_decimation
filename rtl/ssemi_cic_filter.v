@@ -1,5 +1,5 @@
-`ifndef SSEMI_CIC_FILTER_V
-`define SSEMI_CIC_FILTER_V
+`ifndef SSEMI_ADC_DECIMATOR_CIC_FILTER_V
+`define SSEMI_ADC_DECIMATOR_CIC_FILTER_V
 
 //=============================================================================
 // Module Name: ssemi_cic_filter
@@ -39,11 +39,11 @@
 `include "ssemi_defines.vh"
 
 module ssemi_cic_filter #(
-    parameter CIC_STAGES = `SSEMI_CIC_STAGES,
-    parameter DIFFERENTIAL_DELAY = `SSEMI_CIC_DIFFERENTIAL_DELAY,
-    parameter DECIMATION_FACTOR = `SSEMI_DEFAULT_DECIMATION_FACTOR,
-    parameter INPUT_DATA_WIDTH = `SSEMI_INPUT_DATA_WIDTH,
-    parameter OUTPUT_DATA_WIDTH = `SSEMI_CIC_DATA_WIDTH
+    parameter CIC_STAGES = `SSEMI_ADC_DECIMATOR_CIC_STAGES,
+    parameter DIFFERENTIAL_DELAY = `SSEMI_ADC_DECIMATOR_CIC_DIFFERENTIAL_DELAY,
+    parameter DECIMATION_FACTOR = `SSEMI_ADC_DECIMATOR_DEFAULT_DECIMATION_FACTOR,
+    parameter INPUT_DATA_WIDTH = `SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH,
+    parameter OUTPUT_DATA_WIDTH = `SSEMI_ADC_DECIMATOR_CIC_DATA_WIDTH
 ) (
     //==============================================================================
     // Clock and Reset Interface
@@ -77,15 +77,15 @@ module ssemi_cic_filter #(
     //==============================================================================
     // Error Type Constants (replacing enum)
     //==============================================================================
-    parameter SSEMI_CIC_ERROR_NONE = 2'b00;
-    parameter SSEMI_CIC_ERROR_OVERFLOW = 2'b01;
-    parameter SSEMI_CIC_ERROR_UNDERFLOW = 2'b10;
-    parameter SSEMI_CIC_ERROR_RESERVED = 2'b11;
+    parameter SSEMI_ADC_DECIMATOR_CIC_ERROR_NONE = 2'b00;
+    parameter SSEMI_ADC_DECIMATOR_CIC_ERROR_OVERFLOW = 2'b01;
+    parameter SSEMI_ADC_DECIMATOR_CIC_ERROR_UNDERFLOW = 2'b10;
+    parameter SSEMI_ADC_DECIMATOR_CIC_ERROR_RESERVED = 2'b11;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
-`ifdef SSEMI_VERIFICATION
+`ifdef SSEMI_ADC_DECIMATOR_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (CIC_STAGES < 1 || CIC_STAGES > 8) begin
@@ -96,10 +96,10 @@ module ssemi_cic_filter #(
             $error("SSEMI_CIC_FILTER: DIFFERENTIAL_DELAY must be between 1 and 4, got %d", DIFFERENTIAL_DELAY);
         end
         
-        if (DECIMATION_FACTOR < `SSEMI_MIN_DECIMATION_FACTOR || 
-            DECIMATION_FACTOR > `SSEMI_MAX_DECIMATION_FACTOR) begin
-            $error("SSEMI_CIC_FILTER: DECIMATION_FACTOR must be between %d and %d, got %d", 
-                   `SSEMI_MIN_DECIMATION_FACTOR, `SSEMI_MAX_DECIMATION_FACTOR, DECIMATION_FACTOR);
+                if (DECIMATION_FACTOR < `SSEMI_ADC_DECIMATOR_MIN_DECIMATION_FACTOR ||
+            DECIMATION_FACTOR > `SSEMI_ADC_DECIMATOR_MAX_DECIMATION_FACTOR) begin
+            $error("SSEMI_CIC_FILTER: DECIMATION_FACTOR must be between %d and %d, got %d",
+                   `SSEMI_ADC_DECIMATOR_MIN_DECIMATION_FACTOR, `SSEMI_ADC_DECIMATOR_MAX_DECIMATION_FACTOR, DECIMATION_FACTOR);
         end
         
         if (INPUT_DATA_WIDTH < 8 || INPUT_DATA_WIDTH > 24) begin

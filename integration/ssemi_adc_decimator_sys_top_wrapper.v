@@ -21,12 +21,12 @@
 `include "ssemi_defines.vh"
 
 module ssemi_adc_decimator_sys_top_wrapper #(
-    parameter CIC_STAGES = SSEMI_CIC_STAGES,           // Number of CIC stages (1-8)
-    parameter FIR_TAPS = SSEMI_FIR_TAPS,               // Number of FIR filter taps (4-256)
-    parameter HALFBAND_TAPS = SSEMI_HALFBAND_TAPS,     // Number of halfband filter taps (5-128, odd)
-    parameter DECIMATION_FACTOR = SSEMI_DECIMATION_FACTOR, // Overall decimation factor (32-512)
-    parameter DATA_WIDTH = SSEMI_DATA_WIDTH,           // Input data width (16-32 bits)
-    parameter COEFF_WIDTH = SSEMI_COEFF_WIDTH          // Coefficient width (16-24 bits)
+    parameter CIC_STAGES = SSEMI_ADC_DECIMATOR_CIC_STAGES,           // Number of CIC stages (1-8)
+parameter FIR_TAPS = SSEMI_ADC_DECIMATOR_FIR_TAPS,               // Number of FIR filter taps (4-256)
+parameter HALFBAND_TAPS = SSEMI_ADC_DECIMATOR_HALFBAND_TAPS,     // Number of halfband filter taps (5-128, odd)
+parameter DECIMATION_FACTOR = SSEMI_ADC_DECIMATOR_DEFAULT_DECIMATION_FACTOR, // Overall decimation factor (32-512)
+parameter DATA_WIDTH = SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH,           // Input data width (16-32 bits)
+parameter COEFF_WIDTH = SSEMI_ADC_DECIMATOR_FIR_COEFF_WIDTH          // Coefficient width (16-24 bits)
 ) (
     // Clock and Reset
     input wire i_clk,                                  // System clock (max 100MHz)

@@ -49,12 +49,12 @@ logic i_rst_n;
 
 // ADC Input Interface
 logic i_adc_valid;
-logic [SSEMI_DATA_WIDTH-1:0] i_adc_data;
+logic [SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH-1:0] i_adc_data;
 logic o_adc_ready;
 
 // Decimated Output Interface
 logic o_decim_valid;
-logic [SSEMI_DATA_WIDTH-1:0] o_decim_data;
+logic [SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH-1:0] o_decim_data;
 logic i_decim_ready;
 
 // CSR Write Interface
@@ -103,12 +103,12 @@ end
 //==============================================================================
 
 ssemi_adc_decimator_sys_top #(
-    .CIC_STAGES(SSEMI_CIC_STAGES),
-    .FIR_TAPS(SSEMI_FIR_TAPS),
-    .HALFBAND_TAPS(SSEMI_HALFBAND_TAPS),
-    .DECIMATION_FACTOR(SSEMI_DECIMATION_FACTOR),
-    .DATA_WIDTH(SSEMI_DATA_WIDTH),
-    .COEFF_WIDTH(SSEMI_COEFF_WIDTH)
+    .CIC_STAGES(SSEMI_ADC_DECIMATOR_CIC_STAGES),
+    .FIR_TAPS(SSEMI_ADC_DECIMATOR_FIR_TAPS),
+    .HALFBAND_TAPS(SSEMI_ADC_DECIMATOR_HALFBAND_TAPS),
+    .DECIMATION_FACTOR(SSEMI_ADC_DECIMATOR_DEFAULT_DECIMATION_FACTOR),
+    .DATA_WIDTH(SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH),
+    .COEFF_WIDTH(SSEMI_ADC_DECIMATOR_FIR_COEFF_WIDTH)
 ) dut (
     .i_clk(i_clk),
     .i_rst_n(i_rst_n),

@@ -40,12 +40,12 @@
 `include "ssemi_defines.vh"
 
 module ssemi_adc_decimator_sys_top #(
-    parameter CIC_STAGES = SSEMI_CIC_STAGES,           // Number of CIC stages (1-8)
-    parameter FIR_TAPS = SSEMI_FIR_TAPS,               // Number of FIR filter taps (4-256)
-    parameter HALFBAND_TAPS = SSEMI_HALFBAND_TAPS,     // Number of halfband filter taps (5-128, odd)
-    parameter DECIMATION_FACTOR = SSEMI_DECIMATION_FACTOR, // Overall decimation factor (32-512)
-    parameter DATA_WIDTH = SSEMI_DATA_WIDTH,           // Input data width (16-32 bits)
-    parameter COEFF_WIDTH = SSEMI_COEFF_WIDTH          // Coefficient width (16-24 bits)
+    parameter CIC_STAGES = SSEMI_ADC_DECIMATOR_CIC_STAGES,           // Number of CIC stages (1-8)
+    parameter FIR_TAPS = SSEMI_ADC_DECIMATOR_FIR_TAPS,               // Number of FIR filter taps (4-256)
+    parameter HALFBAND_TAPS = SSEMI_ADC_DECIMATOR_HALFBAND_TAPS,     // Number of halfband filter taps (5-128, odd)
+    parameter DECIMATION_FACTOR = SSEMI_ADC_DECIMATOR_DEFAULT_DECIMATION_FACTOR, // Overall decimation factor (32-512)
+    parameter DATA_WIDTH = SSEMI_ADC_DECIMATOR_INPUT_DATA_WIDTH,           // Input data width (16-32 bits)
+    parameter COEFF_WIDTH = SSEMI_ADC_DECIMATOR_FIR_COEFF_WIDTH          // Coefficient width (16-24 bits)
 ) (
     // Clock and Reset
     input wire i_clk,                                  // System clock (max 100MHz)
@@ -82,7 +82,7 @@ module ssemi_adc_decimator_sys_top #(
 //==============================================================================
 // Parameter Validation
 //==============================================================================
-`ifdef SSEMI_VERIFICATION
+`ifdef SSEMI_ADC_DECIMATOR_VERIFICATION
     initial begin
         if (CIC_STAGES < 1 || CIC_STAGES > 8) begin
             $error("SSEMI_ADC_DECIMATOR_SYS_TOP: CIC_STAGES must be between 1 and 8, got %d", CIC_STAGES);
@@ -102,23 +102,23 @@ module ssemi_adc_decimator_sys_top #(
         
         if (DECIMATION_FACTOR < 32 || DECIMATION_FACTOR > 512) begin
             $error("SSEMI_ADC_DECIMATOR_SYS_TOP: DECIMATION_FACTOR must be between %d and %d, got %d",
-                   SSEMI_DECIMATION_MIN, SSEMI_DECIMATION_MAX, DECIMATION_FACTOR);
+                   SSEMI_ADC_DECIMATOR_MIN_DECIMATION_FACTOR, SSEMI_ADC_DECIMATOR_MAX_DECIMATION_FACTOR, DECIMATION_FACTOR);
         end
         
         // Parameter consistency warnings
-        if (CIC_STAGES != SSEMI_CIC_STAGES) begin
+        if (CIC_STAGES != SSEMI_ADC_DECIMATOR_CIC_STAGES) begin
             $warning("SSEMI_ADC_DECIMATOR_SYS_TOP: CIC_STAGES parameter (%d) differs from define (%d)",
-                     CIC_STAGES, SSEMI_CIC_STAGES);
+                     CIC_STAGES, SSEMI_ADC_DECIMATOR_CIC_STAGES);
         end
         
-        if (FIR_TAPS != SSEMI_FIR_TAPS) begin
+        if (FIR_TAPS != SSEMI_ADC_DECIMATOR_FIR_TAPS) begin
             $warning("SSEMI_ADC_DECIMATOR_SYS_TOP: FIR_TAPS parameter (%d) differs from define (%d)",
-                     FIR_TAPS, SSEMI_FIR_TAPS);
+                     FIR_TAPS, SSEMI_ADC_DECIMATOR_FIR_TAPS);
         end
         
-        if (HALFBAND_TAPS != SSEMI_HALFBAND_TAPS) begin
+        if (HALFBAND_TAPS != SSEMI_ADC_DECIMATOR_HALFBAND_TAPS) begin
             $warning("SSEMI_ADC_DECIMATOR_SYS_TOP: HALFBAND_TAPS parameter (%d) differs from define (%d)",
-                     HALFBAND_TAPS, SSEMI_HALFBAND_TAPS);
+                     HALFBAND_TAPS, SSEMI_ADC_DECIMATOR_HALFBAND_TAPS);
         end
     end
 `endif
