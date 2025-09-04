@@ -39,10 +39,10 @@
 // License:     Apache-2.0
 //=============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
-module ssemi_config_status_regs #(
+module ssemi_adc_decimator_config_status_regs #(
     parameter FIR_TAPS = `SSEMI_ADC_DECIMATOR_FIR_TAPS,
     parameter HALFBAND_TAPS = `SSEMI_ADC_DECIMATOR_HALFBAND_TAPS
 ) (

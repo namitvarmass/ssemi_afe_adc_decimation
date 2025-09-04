@@ -17,8 +17,8 @@
 // Version: 1.0
 //==============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
 module ssemi_adc_decimator_sys_top_wrapper #(
     parameter CIC_STAGES = SSEMI_ADC_DECIMATOR_CIC_STAGES,           // Number of CIC stages (1-8)

@@ -34,10 +34,10 @@
 // License:     Apache-2.0
 //=============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
-module ssemi_clock_divider #(
+module ssemi_adc_decimator_clock_divider #(
     parameter CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX)
 ) (
     // Clock and Reset

@@ -43,7 +43,7 @@
       }
     },
     {
-      "path": "rtl/ssemi_cic_filter.v",
+      "path": "rtl/ssemi_adc_decimator_cic_filter.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -51,7 +51,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_fir_filter.v",
+      "path": "rtl/ssemi_adc_decimator_fir_filter.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -59,7 +59,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_halfband_filter.v",
+      "path": "rtl/ssemi_adc_decimator_halfband_filter.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -67,7 +67,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_config_status_regs.v",
+      "path": "rtl/ssemi_adc_decimator_config_status_regs.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -75,7 +75,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_clock_divider.v",
+      "path": "rtl/ssemi_adc_decimator_clock_divider.v",
       "type": "rtl",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -83,7 +83,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_defines.vh",
+      "path": "rtl/ssemi_adc_decimator_defines.vh",
       "type": "header",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",
@@ -91,7 +91,7 @@
       "block": "ssemi"
     },
     {
-      "path": "rtl/ssemi_timescale.vh",
+      "path": "rtl/ssemi_adc_decimator_timescale.vh",
       "type": "header",
       "owner": "SSEMI Development Team",
       "version": "1.0.0",

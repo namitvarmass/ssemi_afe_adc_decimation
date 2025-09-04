@@ -26,8 +26,8 @@
 // Version: 1.0
 //==============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
 module tb_ssemi_adc_decimator_sys_top;
 

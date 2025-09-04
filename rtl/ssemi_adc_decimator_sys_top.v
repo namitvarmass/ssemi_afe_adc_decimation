@@ -36,8 +36,8 @@
 // Version: 1.0
 //==============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
 module ssemi_adc_decimator_sys_top #(
     parameter CIC_STAGES = SSEMI_ADC_DECIMATOR_CIC_STAGES,           // Number of CIC stages (1-8)
@@ -161,7 +161,7 @@ wire halfband_underflow;                               // Halfband underflow fla
 assign cic_clk = i_clk;
 
 // FIR filter clock divider (divide by DECIMATION_FACTOR)
-ssemi_clock_divider #(
+ssemi_adc_decimator_clock_divider #(
     .CLK_DIV_RATIO(DECIMATION_FACTOR)
 ) u_fir_clock_div (
     .i_clk(i_clk),
@@ -170,7 +170,7 @@ ssemi_clock_divider #(
 );
 
 // Halfband filter clock divider (divide by 2 from FIR clock)
-ssemi_clock_divider #(
+ssemi_adc_decimator_clock_divider #(
     .CLK_DIV_RATIO(2)
 ) u_halfband_clock_div (
     .i_clk(fir_clk),
@@ -183,7 +183,7 @@ ssemi_clock_divider #(
 //==============================================================================
 
 // CIC Filter (Stage 1)
-ssemi_cic_filter #(
+ssemi_adc_decimator_cic_filter #(
     .NUM_STAGES(CIC_STAGES),
     .DECIMATION_FACTOR(DECIMATION_FACTOR),
     .DATA_WIDTH(DATA_WIDTH)
@@ -201,7 +201,7 @@ ssemi_cic_filter #(
 );
 
 // FIR Filter (Stage 2)
-ssemi_fir_filter #(
+ssemi_adc_decimator_fir_filter #(
     .NUM_TAPS(FIR_TAPS),
     .DATA_WIDTH(DATA_WIDTH),
     .COEFF_WIDTH(COEFF_WIDTH)
@@ -220,7 +220,7 @@ ssemi_fir_filter #(
 );
 
 // Halfband Filter (Stage 3)
-ssemi_halfband_filter #(
+ssemi_adc_decimator_halfband_filter #(
     .NUM_TAPS(HALFBAND_TAPS),
     .DATA_WIDTH(DATA_WIDTH),
     .COEFF_WIDTH(COEFF_WIDTH)
@@ -250,7 +250,7 @@ assign halfband_ready = i_decim_ready;
 // Configuration and Status Registers
 //==============================================================================
 
-ssemi_config_status_regs #(
+ssemi_adc_decimator_config_status_regs #(
     .FIR_TAPS(FIR_TAPS),
     .HALFBAND_TAPS(HALFBAND_TAPS),
     .COEFF_WIDTH(COEFF_WIDTH)

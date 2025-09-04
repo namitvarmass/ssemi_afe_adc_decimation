@@ -21,12 +21,12 @@ WAVE_DIR = $(SIM_DIR)/waveforms
 
 # Source files
 RTL_SOURCES = \
-	$(RTL_DIR)/ssemi_timescale.vh \
-	$(RTL_DIR)/ssemi_defines.vh \
-	$(RTL_DIR)/ssemi_clock_divider.v \
-	$(RTL_DIR)/ssemi_cic_filter.v \
-	$(RTL_DIR)/ssemi_fir_filter.v \
-	$(RTL_DIR)/ssemi_halfband_filter.v \
+	$(RTL_DIR)/ssemi_adc_decimator_timescale.vh \
+	$(RTL_DIR)/ssemi_adc_decimator_defines.vh \
+	$(RTL_DIR)/ssemi_adc_decimator_clock_divider.v \
+	$(RTL_DIR)/ssemi_adc_decimator_cic_filter.v \
+	$(RTL_DIR)/ssemi_adc_decimator_fir_filter.v \
+	$(RTL_DIR)/ssemi_adc_decimator_halfband_filter.v \
 	$(RTL_DIR)/ssemi_adc_decimator_sys_top.v
 
 TB_SOURCES = \

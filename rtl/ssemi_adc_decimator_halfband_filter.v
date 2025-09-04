@@ -1,13 +1,13 @@
-`ifndef SSEMI_FIR_FILTER_V
-`define SSEMI_FIR_FILTER_V
+`ifndef SSEMI_HALFBAND_FILTER_V
+`define SSEMI_HALFBAND_FILTER_V
 
 //=============================================================================
-// Module Name: ssemi_fir_filter
+// Module Name: ssemi_halfband_filter
 //=============================================================================
-// Description: Configurable FIR filter for ADC decimation
+// Description: Configurable halfband FIR filter for ADC decimation
 //              Supports configurable taps, coefficient width, and data width
 //              Features coefficient update capability and overflow protection
-//              Optimized for high-speed operation with minimal resource usage
+//              Optimized for 2:1 decimation with zero-valued odd taps
 //
 // Timing Constraints:
 //   - Input Clock (i_clk): 100MHz typical, 200MHz maximum
@@ -15,37 +15,39 @@
 //   - Hold Time: 1ns minimum for i_data and i_valid
 //   - Output Delay: 8ns maximum for o_data and o_valid
 //   - Clock-to-Q: 6ns maximum for registered outputs
-//   - Filter Latency: NUM_TAPS cycles (pipeline depth)
+//   - Filter Latency: (NUM_TAPS+1)/2 cycles (effective taps due to zero odd taps)
+//   - Decimation Factor: 2:1 (output rate = input_rate/2)
 //   - Coefficient Update: 1-cycle latency when i_coeff_valid asserted
 //   - Overflow Detection: 1-cycle latency
 //   - Saturation Logic: Combinational (no additional latency)
 //
 // Resource Requirements:
-//   - Registers: ~(NUM_TAPS * INPUT_DATA_WIDTH) + control registers
-//   - Combinational Logic: High (multiplier array + adder tree)
-//   - Memory: ~(NUM_TAPS * COEFF_WIDTH) for coefficients
-//   - Multipliers: NUM_TAPS (can be shared for lower frequencies)
+//   - Registers: ~((NUM_TAPS+1)/2 * INPUT_DATA_WIDTH) + control registers
+//   - Combinational Logic: Moderate (reduced due to zero odd taps)
+//   - Memory: ~((NUM_TAPS+1)/2 * COEFF_WIDTH) for coefficients
+//   - Multipliers: (NUM_TAPS+1)/2 (only non-zero coefficients)
 //
 // Coefficient Validation:
-//   - FIR coefficients: 18-bit signed values, range -131072 to +131071 (0x20000 to 0x1FFFF)
+//   - Halfband coefficients: 18-bit signed values, range -131072 to +131071 (0x20000 to 0x1FFFF)
+//   - Odd-indexed taps: Must be zero for halfband filter property (enforced by validation)
+//   - Even-indexed taps: Non-zero values for filter response optimization
+//   - Tap count validation: Must be odd (5-128 taps) for proper halfband structure
 //   - Coefficient saturation: Values exceeding range are clamped to min/max
-//   - Tap count validation: 4-256 taps with power-of-2 recommendation for efficiency
-//   - Coefficient update: Via CSR interface with immediate effect on filter response
-//   - Default coefficients: Optimized for 20kHz passband compensation and stopband attenuation
+//   - Default coefficients: Optimized for 2:1 decimation with minimal passband ripple
 //
 // Author:      SSEMI Development Team
 // Date:        2025-08-30T18:32:01Z
 // License:     Apache-2.0
 //=============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
-module ssemi_fir_filter #(
-    parameter NUM_TAPS = `SSEMI_FIR_TAPS,
-    parameter COEFF_WIDTH = `SSEMI_FIR_COEFF_WIDTH,
-    parameter INPUT_DATA_WIDTH = `SSEMI_CIC_DATA_WIDTH,
-    parameter OUTPUT_DATA_WIDTH = `SSEMI_FIR_DATA_WIDTH
+module ssemi_adc_decimator_halfband_filter #(
+    parameter NUM_TAPS = `SSEMI_HALFBAND_TAPS,
+    parameter COEFF_WIDTH = `SSEMI_HALFBAND_COEFF_WIDTH,
+    parameter INPUT_DATA_WIDTH = `SSEMI_FIR_DATA_WIDTH,
+    parameter OUTPUT_DATA_WIDTH = `SSEMI_OUTPUT_DATA_WIDTH
 ) (
     //==============================================================================
     // Clock and Reset Interface
@@ -56,14 +58,14 @@ module ssemi_fir_filter #(
     //==============================================================================
     // Control Interface
     //==============================================================================
-    input  wire i_enable,        // Enable FIR filter operation
+    input  wire i_enable,        // Enable halfband filter operation
     input  wire i_valid,         // Input data valid signal
     output reg  o_ready,         // Ready to accept input data
     
     //==============================================================================
     // Data Interface
     //==============================================================================
-    input  wire [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (32-bit signed)
+    input  wire [INPUT_DATA_WIDTH-1:0] i_data,   // Input data (24-bit signed)
     output reg  [OUTPUT_DATA_WIDTH-1:0] o_data,  // Output data (24-bit signed)
     output reg  o_valid,         // Output data valid signal
     
@@ -80,20 +82,20 @@ module ssemi_fir_filter #(
     output reg  o_overflow,      // Overflow detection flag
     output reg  o_underflow,     // Underflow detection flag
     output reg  o_busy,          // Filter busy indicator
-    output reg  [5:0] o_tap_status  // Status of filter taps
+    output reg  [4:0] o_tap_status  // Status of filter taps
 );
 
     //==============================================================================
     // Error Type Constants (replacing enum)
     //==============================================================================
-    parameter SSEMI_FIR_ERROR_NONE = 3'b000;
-    parameter SSEMI_FIR_ERROR_OVERFLOW = 3'b001;
-    parameter SSEMI_FIR_ERROR_UNDERFLOW = 3'b010;
-    parameter SSEMI_FIR_ERROR_INVALID_COEFF = 3'b011;
-    parameter SSEMI_FIR_ERROR_TAP_FAILURE = 3'b100;
-    parameter SSEMI_FIR_ERROR_RESERVED1 = 3'b101;
-    parameter SSEMI_FIR_ERROR_RESERVED2 = 3'b110;
-    parameter SSEMI_FIR_ERROR_RESERVED3 = 3'b111;
+    parameter SSEMI_HALFBAND_ERROR_NONE = 3'b000;
+    parameter SSEMI_HALFBAND_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_HALFBAND_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_HALFBAND_ERROR_INVALID_COEFF = 3'b011;
+    parameter SSEMI_HALFBAND_ERROR_ODD_TAP_NONZERO = 3'b100;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED1 = 3'b101;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED2 = 3'b110;
+    parameter SSEMI_HALFBAND_ERROR_RESERVED3 = 3'b111;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
@@ -101,34 +103,38 @@ module ssemi_fir_filter #(
 `ifdef SSEMI_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
-        if (NUM_TAPS < 4 || NUM_TAPS > 256) begin
-            $error("SSEMI_FIR_FILTER: NUM_TAPS must be between 4 and 256, got %d", NUM_TAPS);
+        if (NUM_TAPS < 5 || NUM_TAPS > 128) begin
+            $error("SSEMI_HALFBAND_FILTER: NUM_TAPS must be between 5 and 128, got %d", NUM_TAPS);
+        end
+        
+        if (NUM_TAPS % 2 == 0) begin
+            $error("SSEMI_HALFBAND_FILTER: NUM_TAPS must be odd, got %d", NUM_TAPS);
         end
         
         if (COEFF_WIDTH < 8 || COEFF_WIDTH > 24) begin
-            $error("SSEMI_FIR_FILTER: COEFF_WIDTH must be between 8 and 24, got %d", COEFF_WIDTH);
+            $error("SSEMI_HALFBAND_FILTER: COEFF_WIDTH must be between 8 and 24, got %d", COEFF_WIDTH);
         end
         
         if (INPUT_DATA_WIDTH < 8 || INPUT_DATA_WIDTH > 48) begin
-            $error("SSEMI_FIR_FILTER: INPUT_DATA_WIDTH must be between 8 and 48, got %d", INPUT_DATA_WIDTH);
+            $error("SSEMI_HALFBAND_FILTER: INPUT_DATA_WIDTH must be between 8 and 48, got %d", INPUT_DATA_WIDTH);
         end
         
         if (OUTPUT_DATA_WIDTH < 8 || OUTPUT_DATA_WIDTH > 48) begin
-            $error("SSEMI_FIR_FILTER: OUTPUT_DATA_WIDTH must be between 8 and 48, got %d", OUTPUT_DATA_WIDTH);
+            $error("SSEMI_HALFBAND_FILTER: OUTPUT_DATA_WIDTH must be between 8 and 48, got %d", OUTPUT_DATA_WIDTH);
         end
         
         if (OUTPUT_DATA_WIDTH > INPUT_DATA_WIDTH + COEFF_WIDTH) begin
-            $warning("SSEMI_FIR_FILTER: OUTPUT_DATA_WIDTH (%d) may cause precision loss with INPUT_DATA_WIDTH (%d) and COEFF_WIDTH (%d)",
+            $warning("SSEMI_HALFBAND_FILTER: OUTPUT_DATA_WIDTH (%d) may cause precision loss with INPUT_DATA_WIDTH (%d) and COEFF_WIDTH (%d)",
                      OUTPUT_DATA_WIDTH, INPUT_DATA_WIDTH, COEFF_WIDTH);
         end
         
         // Check for power-of-2 number of taps (recommended for efficiency)
-        if ((NUM_TAPS & (NUM_TAPS - 1)) != 0) begin
-            $info("SSEMI_FIR_FILTER: NUM_TAPS %d is not a power of 2, may impact performance", NUM_TAPS);
+        if (((NUM_TAPS+1)/2 & ((NUM_TAPS+1)/2 - 1)) != 0) begin
+            $info("SSEMI_HALFBAND_FILTER: (NUM_TAPS+1)/2 %d is not a power of 2, may impact performance", (NUM_TAPS+1)/2);
         end
         
         // Display configuration summary
-        $info("SSEMI_FIR_FILTER: Configuration - Taps: %d, Coeff Width: %d, Input: %d-bit, Output: %d-bit",
+        $info("SSEMI_HALFBAND_FILTER: Configuration - Taps: %d, Coeff Width: %d, Input: %d-bit, Output: %d-bit",
               NUM_TAPS, COEFF_WIDTH, INPUT_DATA_WIDTH, OUTPUT_DATA_WIDTH);
     end
 `endif
@@ -137,7 +143,7 @@ module ssemi_fir_filter #(
     // Internal Signals and Registers
     //==============================================================================
     
-    // Data delay line (shift register)
+    // Data delay line (shift register) - only even-indexed taps are used
     reg [INPUT_DATA_WIDTH-1:0] data_delay_line [0:NUM_TAPS-1];
     reg [INPUT_DATA_WIDTH-1:0] data_delay_next [0:NUM_TAPS-1];
     
@@ -145,13 +151,13 @@ module ssemi_fir_filter #(
     reg [COEFF_WIDTH-1:0] coeff_regs [0:NUM_TAPS-1];
     reg [COEFF_WIDTH-1:0] coeff_next [0:NUM_TAPS-1];
     
-    // Multiplication results
-    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results [0:NUM_TAPS-1];
-    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results_saturated [0:NUM_TAPS-1];
+    // Multiplication results (only for even-indexed coefficients)
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results [0:(NUM_TAPS-1)/2];
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH-1:0] mult_results_saturated [0:(NUM_TAPS-1)/2];
     
     // Accumulation
-    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2(NUM_TAPS)-1:0] accumulator;
-    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2(NUM_TAPS)-1:0] accumulator_next;
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2((NUM_TAPS+1)/2)-1:0] accumulator;
+    reg [INPUT_DATA_WIDTH+COEFF_WIDTH+$clog2((NUM_TAPS+1)/2)-1:0] accumulator_next;
     reg [OUTPUT_DATA_WIDTH-1:0] output_data;
     
     // Control signals
@@ -159,15 +165,17 @@ module ssemi_fir_filter #(
     reg processing_ready;
     reg coeff_update_enable;
     reg [NUM_TAPS-1:0] tap_active;
+    reg sample_ready;
     
     // Error detection
     reg overflow_detected;
     reg underflow_detected;
     reg [NUM_TAPS-1:0] tap_overflow;
     reg [NUM_TAPS-1:0] tap_underflow;
+    reg odd_tap_nonzero_error;
     
     // Status tracking
-    reg [5:0] tap_status_reg;
+    reg [4:0] tap_status_reg;
     reg busy_reg;
     reg coeff_ready_reg;
 
@@ -176,27 +184,21 @@ module ssemi_fir_filter #(
     //==============================================================================
     
     // Coefficient update logic
-    genvar i;
-    generate
-        for (i = 0; i < NUM_TAPS; i = i + 1) begin : coeff_update
-            always @(posedge i_clk or negedge i_rst_n) begin
-                if (!i_rst_n) begin
-                    coeff_regs[i] <= '0;
-                end else if (!i_enable) begin
-                    coeff_regs[i] <= '0;
-                end else if (i_coeff_valid) begin
-                    coeff_regs[i] <= coeff_next[i];
-                end
-            end
-        end
-    endgenerate
-
     always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
+            for (int i = 0; i < NUM_TAPS; i = i + 1) begin
+                coeff_regs[i] <= '0;
+            end
             coeff_ready_reg <= 1'b1;
         end else if (!i_enable) begin
+            for (int i = 0; i < NUM_TAPS; i = i + 1) begin
+                coeff_regs[i] <= '0;
+            end
             coeff_ready_reg <= 1'b1;
         end else if (i_coeff_valid) begin
+            for (int i = 0; i < NUM_TAPS; i = i + 1) begin
+                coeff_regs[i] <= coeff_next[i];
+            end
             coeff_ready_reg <= 1'b0;
         end else begin
             coeff_ready_reg <= 1'b1;
@@ -204,21 +206,24 @@ module ssemi_fir_filter #(
     end
     
     // Coefficient validation and assignment
-    genvar j;
-    generate
-        for (j = 0; j < NUM_TAPS; j = j + 1) begin : coeff_validation
-            always @(*) begin
-                // Validate coefficient range
-                if (i_coeff[j] > {1'b0, {(COEFF_WIDTH-1){1'b1}}}) begin
-                    coeff_next[j] = {1'b0, {(COEFF_WIDTH-1){1'b1}}}; // Saturate to max positive
-                end else if (i_coeff[j] < {1'b1, {(COEFF_WIDTH-1){1'b0}}}) begin
-                    coeff_next[j] = {1'b1, {(COEFF_WIDTH-1){1'b0}}}; // Saturate to max negative
-                end else begin
-                    coeff_next[j] = i_coeff[j];
-                end
+    always @(*) begin
+        odd_tap_nonzero_error = 1'b0;
+        for (int i = 0; i < NUM_TAPS; i = i + 1) begin
+            // Validate coefficient range
+            if (i_coeff[i] > {1'b0, {(COEFF_WIDTH-1){1'b1}}}) begin
+                coeff_next[i] = {1'b0, {(COEFF_WIDTH-1){1'b1}}}; // Saturate to max positive
+            end else if (i_coeff[i] < {1'b1, {(COEFF_WIDTH-1){1'b0}}}) begin
+                coeff_next[i] = {1'b1, {(COEFF_WIDTH-1){1'b0}}}; // Saturate to max negative
+            end else begin
+                coeff_next[i] = i_coeff[i];
+            end
+            
+            // Check for odd-indexed non-zero coefficients (should be zero for halfband)
+            if (i % 2 == 1 && i_coeff[i] != 0) begin
+                odd_tap_nonzero_error = 1'b1;
             end
         end
-    endgenerate
+    end
 
     //==============================================================================
     // Data Delay Line Management
@@ -250,31 +255,35 @@ module ssemi_fir_filter #(
     end
 
     //==============================================================================
-    // Multiplication and Accumulation
+    // Multiplication and Accumulation (Halfband Optimization)
     //==============================================================================
     
-    // Multiplication with overflow detection
+    // Multiplication with overflow detection (only even-indexed coefficients)
     genvar j;
     generate
-        for (j = 0; j < NUM_TAPS; j = j + 1) begin : mult_stages
-            // Multiplication
-            assign mult_results[j] = data_delay_line[j] * coeff_regs[j];
+        for (j = 0; j < (NUM_TAPS+1)/2; j = j + 1) begin : mult_stages
+            // Multiplication for even-indexed coefficients only
+            assign mult_results[j] = data_delay_line[j*2] * coeff_regs[j*2];
             
             // Overflow/underflow detection for each multiplication
             always @(*) begin
                 if (mult_results[j] > {1'b0, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b1}}}) begin
                     mult_results_saturated[j] = {1'b0, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b1}}};
-                    tap_overflow[j] = 1'b1;
-                    tap_underflow[j] = 1'b0;
+                    tap_overflow[j*2] = 1'b1;
+                    tap_underflow[j*2] = 1'b0;
                 end else if (mult_results[j] < {1'b1, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b0}}}) begin
                     mult_results_saturated[j] = {1'b1, {(INPUT_DATA_WIDTH+COEFF_WIDTH-1){1'b0}}};
-                    tap_overflow[j] = 1'b0;
-                    tap_underflow[j] = 1'b1;
+                    tap_overflow[j*2] = 1'b0;
+                    tap_underflow[j*2] = 1'b1;
                 end else begin
                     mult_results_saturated[j] = mult_results[j];
-                    tap_overflow[j] = 1'b0;
-                    tap_underflow[j] = 1'b0;
+                    tap_overflow[j*2] = 1'b0;
+                    tap_underflow[j*2] = 1'b0;
                 end
+                
+                // Odd-indexed taps should not contribute to multiplication
+                tap_overflow[j*2+1] = 1'b0;
+                tap_underflow[j*2+1] = 1'b0;
             end
         end
     endgenerate
@@ -307,10 +316,10 @@ module ssemi_fir_filter #(
         end
     end
     
-    // Accumulation computation
+    // Accumulation computation (only even-indexed coefficients)
     always @(*) begin
         accumulator_next = '0;
-        for (int k = 0; k < NUM_TAPS; k = k + 1) begin
+        for (int k = 0; k < (NUM_TAPS+1)/2; k = k + 1) begin
             accumulator_next = accumulator_next + mult_results_saturated[k];
         end
     end
@@ -326,20 +335,19 @@ module ssemi_fir_filter #(
     // Status tracking
     always @(posedge i_clk or negedge i_rst_n) begin
         if (!i_rst_n) begin
-            tap_status_reg <= 6'h00;
+            tap_status_reg <= 5'h00;
             busy_reg <= 1'b0;
         end else if (!i_enable) begin
-            tap_status_reg <= 6'h00;
+            tap_status_reg <= 5'h00;
             busy_reg <= 1'b0;
         end else begin
             busy_reg <= i_valid || processing_valid;
             tap_status_reg <= {
-                overflow_detected,     // bit 5: Overflow detected
-                underflow_detected,    // bit 4: Underflow detected
-                processing_valid,      // bit 3: Processing active
-                i_valid,              // bit 2: Input valid
-                i_coeff_valid,        // bit 1: Coefficient update
-                busy_reg              // bit 0: Busy state
+                overflow_detected,     // bit 4: Overflow detected
+                underflow_detected,    // bit 3: Underflow detected
+                processing_valid,      // bit 2: Processing active
+                i_valid,              // bit 1: Input valid
+                odd_tap_nonzero_error // bit 0: Odd tap non-zero error
             };
         end
     end
@@ -359,4 +367,4 @@ module ssemi_fir_filter #(
 
 endmodule
 
-`endif // SSEMI_FIR_FILTER_V
+`endif // SSEMI_HALFBAND_FILTER_V

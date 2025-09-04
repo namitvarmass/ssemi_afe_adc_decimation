@@ -35,10 +35,10 @@
 // License:     Apache-2.0
 //=============================================================================
 
-`include "ssemi_timescale.vh"
-`include "ssemi_defines.vh"
+`include "ssemi_adc_decimator_timescale.vh"
+`include "ssemi_adc_decimator_defines.vh"
 
-module ssemi_cic_filter #(
+module ssemi_adc_decimator_cic_filter #(
     parameter CIC_STAGES = `SSEMI_ADC_DECIMATOR_CIC_STAGES,
     parameter DIFFERENTIAL_DELAY = `SSEMI_ADC_DECIMATOR_CIC_DIFFERENTIAL_DELAY,
     parameter DECIMATION_FACTOR = `SSEMI_ADC_DECIMATOR_DEFAULT_DECIMATION_FACTOR,

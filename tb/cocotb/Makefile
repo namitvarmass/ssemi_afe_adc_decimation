@@ -18,13 +18,13 @@ SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
 # Design source files for SSEMI ADC Decimator
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_timescale.vh
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_defines.vh
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_clock_divider.v
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_cic_filter.v
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_fir_filter.v
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_halfband_filter.v
-VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_config_status_regs.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_timescale.vh
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_defines.vh
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_clock_divider.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_cic_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_fir_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_halfband_filter.v
+VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_config_status_regs.v
 VERILOG_SOURCES += $(PWD)/../../rtl/ssemi_adc_decimator_sys_top.v
 
 # TOPLEVEL is the name of the toplevel module in your Verilog or VHDL file
