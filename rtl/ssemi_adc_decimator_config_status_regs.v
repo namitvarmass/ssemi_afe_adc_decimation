@@ -2,7 +2,7 @@
 `define SSEMI_ADC_DECIMATOR_CONFIG_STATUS_REGS_V
 
 //=============================================================================
-// Module Name: ssemi_config_status_regs
+// Module Name: ssemi_adc_decimator_config_status_regs
 //=============================================================================
 // Description: Configuration and status register management for ADC decimator
 //              Handles coefficient loading, status reporting, and error detection
@@ -135,14 +135,14 @@ module ssemi_adc_decimator_config_status_regs #(
             $error("SSEMI_CONFIG_STATUS_REGS: HALFBAND_TAPS must be between 5 and 128, got %d", HALFBAND_TAPS);
         end
         
-        if (FIR_TAPS != `SSEMI_FIR_TAPS) begin
-            $warning("SSEMI_CONFIG_STATUS_REGS: FIR_TAPS parameter (%d) differs from define (%d)", 
-                     FIR_TAPS, `SSEMI_FIR_TAPS);
+        if (FIR_TAPS != `SSEMI_ADC_DECIMATOR_FIR_TAPS) begin
+            $warning("SSEMI_CONFIG_STATUS_REGS: FIR_TAPS parameter (%d) differs from define (%d)",
+                     FIR_TAPS, `SSEMI_ADC_DECIMATOR_FIR_TAPS);
         end
         
-        if (HALFBAND_TAPS != `SSEMI_HALFBAND_TAPS) begin
-            $warning("SSEMI_CONFIG_STATUS_REGS: HALFBAND_TAPS parameter (%d) differs from define (%d)", 
-                     HALFBAND_TAPS, `SSEMI_HALFBAND_TAPS);
+        if (HALFBAND_TAPS != `SSEMI_ADC_DECIMATOR_HALFBAND_TAPS) begin
+            $warning("SSEMI_CONFIG_STATUS_REGS: HALFBAND_TAPS parameter (%d) differs from define (%d)",
+                     HALFBAND_TAPS, `SSEMI_ADC_DECIMATOR_HALFBAND_TAPS);
         end
     end
 `endif

@@ -1,5 +1,5 @@
-`ifndef SSEMI_TIMESCALE_VH
-`define SSEMI_TIMESCALE_VH
+`ifndef SSEMI_ADC_DECIMATOR_TIMESCALE_VH
+`define SSEMI_ADC_DECIMATOR_TIMESCALE_VH
 
 //=============================================================================
 // Common Timescale Definition
@@ -12,4 +12,4 @@
 
 `timescale 1ns/1ps
 
-`endif // SSEMI_TIMESCALE_VH
+`endif // SSEMI_ADC_DECIMATOR_TIMESCALE_VH

@@ -1,8 +1,8 @@
-`ifndef SSEMI_FIR_FILTER_V
-`define SSEMI_FIR_FILTER_V
+`ifndef SSEMI_ADC_DECIMATOR_FIR_FILTER_V
+`define SSEMI_ADC_DECIMATOR_FIR_FILTER_V
 
 //=============================================================================
-// Module Name: ssemi_fir_filter
+// Module Name: ssemi_adc_decimator_fir_filter
 //=============================================================================
 // Description: Configurable FIR filter for ADC decimation
 //              Supports configurable taps, coefficient width, and data width
@@ -42,10 +42,10 @@
 `include "ssemi_adc_decimator_defines.vh"
 
 module ssemi_adc_decimator_fir_filter #(
-    parameter NUM_TAPS = `SSEMI_FIR_TAPS,
-    parameter COEFF_WIDTH = `SSEMI_FIR_COEFF_WIDTH,
-    parameter INPUT_DATA_WIDTH = `SSEMI_CIC_DATA_WIDTH,
-    parameter OUTPUT_DATA_WIDTH = `SSEMI_FIR_DATA_WIDTH
+    parameter NUM_TAPS = `SSEMI_ADC_DECIMATOR_FIR_TAPS,
+    parameter COEFF_WIDTH = `SSEMI_ADC_DECIMATOR_FIR_COEFF_WIDTH,
+    parameter INPUT_DATA_WIDTH = `SSEMI_ADC_DECIMATOR_CIC_DATA_WIDTH,
+    parameter OUTPUT_DATA_WIDTH = `SSEMI_ADC_DECIMATOR_FIR_DATA_WIDTH
 ) (
     //==============================================================================
     // Clock and Reset Interface
@@ -86,14 +86,14 @@ module ssemi_adc_decimator_fir_filter #(
     //==============================================================================
     // Error Type Constants (replacing enum)
     //==============================================================================
-    parameter SSEMI_FIR_ERROR_NONE = 3'b000;
-    parameter SSEMI_FIR_ERROR_OVERFLOW = 3'b001;
-    parameter SSEMI_FIR_ERROR_UNDERFLOW = 3'b010;
-    parameter SSEMI_FIR_ERROR_INVALID_COEFF = 3'b011;
-    parameter SSEMI_FIR_ERROR_TAP_FAILURE = 3'b100;
-    parameter SSEMI_FIR_ERROR_RESERVED1 = 3'b101;
-    parameter SSEMI_FIR_ERROR_RESERVED2 = 3'b110;
-    parameter SSEMI_FIR_ERROR_RESERVED3 = 3'b111;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_NONE = 3'b000;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_OVERFLOW = 3'b001;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_UNDERFLOW = 3'b010;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_INVALID_COEFF = 3'b011;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_TAP_FAILURE = 3'b100;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_RESERVED1 = 3'b101;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_RESERVED2 = 3'b110;
+    parameter SSEMI_ADC_DECIMATOR_FIR_ERROR_RESERVED3 = 3'b111;
 
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
@@ -359,4 +359,4 @@ module ssemi_adc_decimator_fir_filter #(
 
 endmodule
 
-`endif // SSEMI_FIR_FILTER_V
+`endif // SSEMI_ADC_DECIMATOR_FIR_FILTER_V

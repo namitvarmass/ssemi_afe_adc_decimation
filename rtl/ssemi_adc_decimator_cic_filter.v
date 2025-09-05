@@ -2,7 +2,7 @@
 `define SSEMI_ADC_DECIMATOR_CIC_FILTER_V
 
 //=============================================================================
-// Module Name: ssemi_cic_filter
+// Module Name: ssemi_adc_decimator_cic_filter
 //=============================================================================
 // Description: Configurable CIC (Cascaded Integrator-Comb) filter for ADC decimation
 //              Supports configurable stages, differential delay, and decimation factor

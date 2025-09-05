@@ -2,7 +2,7 @@
 `define SSEMI_ADC_DECIMATOR_CLOCK_DIVIDER_V
 
 //=============================================================================
-// Module Name: ssemi_clock_divider
+// Module Name: ssemi_adc_decimator_clock_divider
 //=============================================================================
 // Description: Configurable clock divider for decimation stages
 //              Supports division ratios from 2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX
@@ -111,4 +111,4 @@ module ssemi_adc_decimator_clock_divider #(
 
 endmodule
 
-`endif // SSEMI_CLOCK_DIVIDER_V
+`endif // SSEMI_ADC_DECIMATOR_CLOCK_DIVIDER_V
