@@ -3,7 +3,7 @@
 This project follows Vyges conventions for hardware IP development. Always refer to .vyges-ai-context.json for:
 
 ## Code Generation Rules
-- Use SystemVerilog for RTL
+- Use Verilog-2001 for RTL and SystemVerilog for testbenches when required
 - Follow snake_case naming for modules and files
 - Include required module headers with description and author
 - Place RTL in rtl/ directory
@@ -18,7 +18,7 @@ This project follows Vyges conventions for hardware IP development. Always refer
 - Repository: {orgname}/{repo-name} format
 - IP name: lowercase with hyphens, 3-50 chars
 - Modules: snake_case (e.g., pwm_controller)
-- Files: snake_case.sv (e.g., pwm_controller.sv)
+- Files: snake_case.sv or snake_case.v (e.g., pwm_controller.sv or pwm_controller.v)
 - Parameters: UPPER_SNAKE_CASE
 - Signals: snake_case with direction prefix (i_, o_, io_)
 

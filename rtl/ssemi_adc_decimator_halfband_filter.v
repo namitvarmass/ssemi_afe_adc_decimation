@@ -100,7 +100,7 @@ module ssemi_adc_decimator_halfband_filter #(
     //==============================================================================
     // Parameter Validation with Detailed Error Messages (verification only)
     //==============================================================================
-`ifdef SSEMI_VERIFICATION
+`ifdef SSEMI_ADC_DECIMATOR_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (NUM_TAPS < 5 || NUM_TAPS > 128) begin

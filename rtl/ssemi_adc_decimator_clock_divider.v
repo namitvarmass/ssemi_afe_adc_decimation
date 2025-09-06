@@ -38,7 +38,7 @@
 `include "ssemi_adc_decimator_defines.vh"
 
 module ssemi_adc_decimator_clock_divider #(
-    parameter CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX)
+    parameter SSEMI_ADC_DECIMATOR_CLK_DIV_RATIO = 2  // Clock division ratio (2 to SSEMI_ADC_DECIMATOR_CLK_DIV_MAX)
 ) (
     // Clock and Reset
     input  wire i_clk,           // Input clock
@@ -61,7 +61,7 @@ module ssemi_adc_decimator_clock_divider #(
     
     // Parameter validation
     initial begin
-        if (CLK_DIV_RATIO < 2 || CLK_DIV_RATIO > `SSEMI_ADC_DECIMATOR_CLK_DIV_MAX) begin
+        if (SSEMI_ADC_DECIMATOR_CLK_DIV_RATIO < 2 || SSEMI_ADC_DECIMATOR_CLK_DIV_RATIO > `SSEMI_ADC_DECIMATOR_CLK_DIV_MAX) begin
             $error("CLK_DIV_RATIO must be between 2 and %d", `SSEMI_ADC_DECIMATOR_CLK_DIV_MAX);
         end
     end
@@ -72,7 +72,7 @@ module ssemi_adc_decimator_clock_divider #(
             clk_counter <= 0;
         end else if (!i_enable || i_sync_reset) begin
             clk_counter <= 0;
-        end else if (clk_counter >= CLK_DIV_RATIO - 1) begin
+        end else if (clk_counter >= SSEMI_ADC_DECIMATOR_CLK_DIV_RATIO - 1) begin
             clk_counter <= 0;
         end else begin
             clk_counter <= clk_counter + 1;

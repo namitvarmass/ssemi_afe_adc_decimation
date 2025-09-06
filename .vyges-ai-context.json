@@ -52,11 +52,11 @@
           "fix_command": "git remote remove origin && git remote add origin https://github.com/{org}/{repo}.git",
           "cli_fix": "Use 'vyges init --fix-remote' or 'vyges quickstart --fix-remote' to automatically remove template remote",
           "functional_ip_principle": "Each repository represents one functional IP in the catalog (e.g., uart-controller contains UART Master, FIFO, and other components as one functional unit)",
-          "namespace_safety_principle": "Use {block}_{module}.sv naming to prevent namespace collisions when integrating multiple IP blocks from different vendors or organizations"
+          "namespace_safety_principle": "Use {block}_{module}.v naming to prevent namespace collisions when integrating multiple IP blocks from different vendors or organizations"
         },
         "ip_name": "lowercase with hyphens/underscores, 3-50 chars, start with letter, no consecutive hyphens/underscores",
         "modules": "snake_case (e.g., pwm_controller, uart_transmitter)",
-        "files": "{block}_{module}.sv (e.g., fft_memory_interface.sv, fft_rescale_unit.sv)",
+        "files": "{block}_{module}.v (e.g., fft_memory_interface.v, fft_rescale_unit.v)",
         "testbenches": "tb_<module_name>.sv (e.g., tb_pwm_controller.sv)",
         "parameters": "UPPER_SNAKE_CASE (e.g., CLOCK_FREQUENCY, DATA_WIDTH)",
         "signals": "snake_case (e.g., i_clk, o_data, enable_n)",
@@ -122,7 +122,7 @@
         "parameter_namespace_isolation": "Example: FFT_DATA_WIDTH vs UART_DATA_WIDTH prevents conflicts when both IP blocks are used in the same design"
       },
       "organization": {
-        "rtl_files": "Place all RTL modules in rtl/ directory with {block}_{module}.sv naming",
+        "rtl_files": "Place all RTL modules in rtl/ directory with {block}_{module}.v naming",
         "header_files": "Place common headers in rtl/ directory with {block}_{type}.vh naming",
         "testbench_files": "Place all testbenches in tb/ directory",
         "test_files": "Place test vectors and coverage in test/ directory",
@@ -184,9 +184,9 @@
     "required_patterns": {
       "include_guards": {
         "description": "Every RTL file must have include guards to prevent multiple inclusion",
-        "pattern": "`ifndef {BLOCK}_{MODULE}_SV` and `define {BLOCK}_{MODULE}_SV",
-        "example": "`ifndef FFT_MEMORY_INTERFACE_SV` ... `endif // FFT_MEMORY_INTERFACE_SV",
-        "naming": "Use UPPER_SNAKE_CASE with BLOCK_MODULE_SV format"
+        "pattern": "`ifndef {BLOCK}_{MODULE}_V` and `define {BLOCK}_{MODULE}_V",
+        "example": "`ifndef FFT_MEMORY_INTERFACE_V` ... `endif // FFT_MEMORY_INTERFACE_V",
+        "naming": "Use UPPER_SNAKE_CASE with BLOCK_MODULE_V format"
       },
       "common_headers": {
         "description": "Include common header files for consistency",
@@ -209,15 +209,15 @@
       "required_patterns": {
         "include_guards": {
           "description": "Every RTL file must have include guards to prevent multiple inclusion",
-          "pattern": "`ifndef {BLOCK}_{MODULE}_SV` and `define {BLOCK}_{MODULE}_SV",
-          "example": "`ifndef FFT_MEMORY_INTERFACE_SV` ... `endif // FFT_MEMORY_INTERFACE_SV",
-          "naming": "Use UPPER_SNAKE_CASE with BLOCK_MODULE_SV format"
+          "pattern": "`ifndef {BLOCK}_{MODULE}_V` and `define {BLOCK}_{MODULE}_V",
+          "example": "`ifndef FFT_MEMORY_INTERFACE_V` ... `endif // FFT_MEMORY_INTERFACE_V",
+          "naming": "Use UPPER_SNAKE_CASE with BLOCK_MODULE_V format"
         },
         "module_header": {
           "description": "Every RTL module must have a standardized header with include guards",
           "template": [
-            "`ifndef {BLOCK}_{MODULE}_SV",
-            "`define {BLOCK}_{MODULE}_SV",
+            "`ifndef {BLOCK}_{MODULE}_V",
+            "`define {BLOCK}_{MODULE}_V",
             "",
             "`include \"{block}_timescale.vh\"",
             "`include \"{block}_defines.vh\"",
@@ -255,8 +255,8 @@
       "cocotb_compatibility": "If cocotb is used, test must run with ghdl/iverilog/verilator",
       "include_guard_validation": {
         "description": "Validate that all RTL files have proper include guards",
-        "check": "Every .sv file must start with `ifndef and end with `endif",
-        "naming": "Include guard names must match filename pattern: {BLOCK}_{MODULE}_SV"
+        "check": "Every .v file must start with `ifndef and end with `endif",
+        "naming": "Include guard names must match filename pattern: {BLOCK}_{MODULE}_V"
       },
       "common_header_inclusion": {
         "description": "Validate that all RTL files include common headers",
@@ -267,7 +267,7 @@
       },
       "namespace_safety": {
         "description": "Ensure namespace safety through proper file naming",
-        "principle": "Use {block}_{module}.sv to prevent collisions between IP blocks",
+        "principle": "Use {block}_{module}.v to prevent collisions between IP blocks",
         "benefit": "Enables safe integration of multiple IP blocks without naming conflicts"
       }
     },
@@ -810,8 +810,8 @@
     "module_header": {
       "description": "Every RTL module must have a standardized header with include guards",
       "template": [
-        "`ifndef {BLOCK}_{MODULE}_SV",
-        "`define {BLOCK}_{MODULE}_SV",
+        "`ifndef {BLOCK}_{MODULE}_V",
+        "`define {BLOCK}_{MODULE}_V",
         "",
         "`include \"{block}_timescale.vh\"",
         "`include \"{block}_defines.vh\"",
@@ -834,7 +834,7 @@
         "",
         "endmodule",
         "",
-        "`endif // {BLOCK}_{MODULE}_SV"
+        "`endif // {BLOCK}_{MODULE}_V"
       ]
     },
     "interface_patterns": {
@@ -864,8 +864,8 @@
       }
     },
     "coding_standards": {
-      "language": "SystemVerilog",
-      "style": "Use always_ff for sequential logic, always_comb for combinational logic",
+      "language": "Verilog-2001",
+      "style": "Use always @(posedge clk or negedge rst_n) for sequential logic, always @(*) for combinational logic",
       "assertions": "Include basic assertions for critical functionality",
       "parameters": "Use parameters for configurable features",
       "comments": "Include detailed comments for complex logic",
@@ -878,15 +878,15 @@
         "implicit wire declarations"
       ],
       "required_constructs": [
-        "always_ff for sequential logic",
-        "always_comb for combinational logic",
+        "always @(posedge clk or negedge rst_n) for sequential logic",
+        "always @(*) for combinational logic",
         "explicit signal declarations"
       ]
     },
     "semantic_fixes": {
       "casex_replacement": "Replace casex with casez for better synthesis and simulation consistency",
       "width_mismatch": "Ensure all signal assignments have matching widths, use explicit width casting when needed",
-      "unused_signal_handling": "Mark unused signals with _unused suffix or add // unused comment",
+      "unused_signal_handling": "Mark unused signals with _nc suffix and add // unused comment",
       "implicit_declaration_fix": "Always declare signals explicitly with proper types and widths",
       "port_direction_clarity": "Ensure all ports have clear direction and type specifications"
     }
@@ -906,8 +906,8 @@
   },
   "code_generation_rules": {
     "rtl": {
-      "language": "SystemVerilog",
-      "style": "Use always_ff for sequential logic, always_comb for combinational logic",
+      "language": "Verilog-2001",
+      "style": "Use always @(posedge clk or negedge rst_n) for sequential logic, always @(*) for combinational logic",
       "assertions": "Include basic assertions for critical functionality",
       "parameters": "Use parameters for configurable features",
       "comments": "Include detailed comments for complex logic",
@@ -1000,7 +1000,7 @@
       "bow_validation": "Guide BoW compliance validation for chiplet interfaces"
     },
     "code_generation": {
-      "module_generation": "Generate SystemVerilog module for {functionality} with {interfaces} following Vyges conventions",
+      "module_generation": "Generate Verilog-2001 module for {functionality} with {interfaces} following Vyges conventions",
       "interface_generation": "Generate interface wrapper for {protocol} with {requirements}",
       "testbench_generation": "Generate testbench for {module} with {verification_requirements}",
       "constraint_generation": "Generate constraints for {target_flow} with {requirements}"
@@ -1876,7 +1876,7 @@
       "regression_testing": "Set up automated regression testing for {test_suite}"
     },
     "rtl_generation": {
-      "generate_module": "Generate a SystemVerilog module for {functionality} with {interfaces}",
+      "generate_module": "Generate a Verilog-2001 module for {functionality} with {interfaces}",
       "optimize_design": "Optimize this RTL design for {target_metric} while maintaining {constraints}",
       "fix_issues": "Identify and fix issues in this RTL code: {code_snippet}",
       "add_features": "Add {feature} to this existing module while preserving {existing_functionality}"
@@ -1979,7 +1979,7 @@
       "enhance_ai_assistance": "Enhance IP block to improve AI assistance capabilities and metadata coverage",
       "create_ai_optimized": "Create AI-optimized IP block with comprehensive metadata and verification support"
     },
-    "create_module": "Create a SystemVerilog module following Vyges conventions. Include proper header, interface signals, and basic functionality.",
+    "create_module": "Create a Verilog-2001 module following Vyges conventions. Include proper header, interface signals, and basic functionality.",
     "create_testbench": "Create a SystemVerilog testbench for the given module. Include clock generation, reset sequence, and basic test stimulus.",
     "expand_structure": "Suggest when to use 'vyges expand' commands to add complexity to the project structure.",
     "validate_structure": "Check if the current project structure follows Vyges conventions and suggest improvements.",
@@ -2604,8 +2604,8 @@
     "block_field": "Logical block name or namespace to prevent naming conflicts between functional blocks within the same IP",
     "file_naming_enforcement": {
       "one_module_per_file": "Each RTL file must contain exactly one module",
-      "filename_module_match": "Filename must match module name exactly (e.g., module spi_controller must be in spi_controller.sv)",
-      "naming_pattern": "Use {block}_{module}.sv for internal files, {vendor}_{block}_{module}.sv for third-party IP",
+      "filename_module_match": "Filename must match module name exactly (e.g., module spi_controller must be in spi_controller.v)",
+      "naming_pattern": "Use {block}_{module}.v for internal files, {vendor}_{block}_{module}.v for third-party IP",
       "file_placement": "RTL files in rtl/, testbenches in tb/, headers in rtl/ or include/, constraints in constraints/"
     }
   },
@@ -3005,9 +3005,9 @@
             "uart_control"
           ],
           "file_examples": [
-            "uart_controller_uart_transmitter.sv",
-            "uart_controller_uart_receiver.sv",
-            "uart_controller_uart_fifo.sv"
+            "uart_controller_uart_transmitter.v",
+            "uart_controller_uart_receiver.v",
+            "uart_controller_uart_fifo.v"
           ]
         },
         "spi": {
@@ -3024,9 +3024,9 @@
             "spi_clock_gen"
           ],
           "file_examples": [
-            "spi_controller_spi_master.sv",
-            "spi_controller_spi_slave.sv",
-            "spi_controller_spi_fifo.sv"
+            "spi_controller_spi_master.v",
+            "spi_controller_spi_slave.v",
+            "spi_controller_spi_fifo.v"
           ]
         },
         "i2c": {
@@ -3043,9 +3043,9 @@
             "i2c_clock_gen"
           ],
           "file_examples": [
-            "i2c_controller_i2c_master.sv",
-            "i2c_controller_i2c_slave.sv",
-            "i2c_controller_i2c_fifo.sv"
+            "i2c_controller_i2c_master.v",
+            "i2c_controller_i2c_slave.v",
+            "i2c_controller_i2c_fifo.v"
           ]
         },
         "pcie": {
@@ -3062,9 +3062,9 @@
             "pcie_clock_gen"
           ],
           "file_examples": [
-            "pcie_phy_pcie_tx.sv",
-            "pcie_phy_pcie_rx.sv",
-            "pcie_phy_pcie_serdes.sv"
+            "pcie_phy_pcie_tx.v",
+            "pcie_phy_pcie_rx.v",
+            "pcie_phy_pcie_serdes.v"
           ]
         }
       },
@@ -3083,9 +3083,9 @@
             "ddr_timing"
           ],
           "file_examples": [
-            "ddr_controller_ddr_command.sv",
-            "ddr_controller_ddr_data_path.sv",
-            "ddr_controller_ddr_control.sv"
+            "ddr_controller_ddr_command.v",
+            "ddr_controller_ddr_data_path.v",
+            "ddr_controller_ddr_control.v"
           ]
         },
         "sram": {
@@ -3101,9 +3101,9 @@
             "sram_timing"
           ],
           "file_examples": [
-            "sram_controller_sram_control.sv",
-            "sram_controller_sram_data_path.sv",
-            "sram_controller_sram_address.sv"
+            "sram_controller_sram_control.v",
+            "sram_controller_sram_data_path.v",
+            "sram_controller_sram_address.v"
           ]
         },
         "flash": {
@@ -3120,9 +3120,9 @@
             "flash_program"
           ],
           "file_examples": [
-            "flash_controller_flash_control.sv",
-            "flash_controller_flash_data_path.sv",
-            "flash_controller_flash_timing.sv"
+            "flash_controller_flash_control.v",
+            "flash_controller_flash_data_path.v",
+            "flash_controller_flash_timing.v"
           ]
         }
       },
@@ -3141,9 +3141,9 @@
             "cpu_pipeline"
           ],
           "file_examples": [
-            "cpu_core_cpu_alu.sv",
-            "cpu_core_cpu_control.sv",
-            "cpu_core_cpu_registers.sv"
+            "cpu_core_cpu_alu.v",
+            "cpu_core_cpu_control.v",
+            "cpu_core_cpu_registers.v"
           ]
         },
         "dsp": {
@@ -3160,9 +3160,9 @@
             "dsp_memory"
           ],
           "file_examples": [
-            "dsp_processor_dsp_alu.sv",
-            "dsp_processor_dsp_multiplier.sv",
-            "dsp_processor_dsp_accumulator.sv"
+            "dsp_processor_dsp_alu.v",
+            "dsp_processor_dsp_multiplier.v",
+            "dsp_processor_dsp_accumulator.v"
           ]
         },
         "gpu": {
@@ -3179,9 +3179,9 @@
             "gpu_control"
           ],
           "file_examples": [
-            "gpu_core_gpu_shader.sv",
-            "gpu_core_gpu_texture.sv",
-            "gpu_core_gpu_rasterizer.sv"
+            "gpu_core_gpu_shader.v",
+            "gpu_core_gpu_texture.v",
+            "gpu_core_gpu_rasterizer.v"
           ]
         }
       },
@@ -3200,9 +3200,9 @@
             "adc_reference"
           ],
           "file_examples": [
-            "adc_converter_adc_control.sv",
-            "adc_converter_adc_data_path.sv",
-            "adc_converter_adc_timing.sv"
+            "adc_converter_adc_control.v",
+            "adc_converter_adc_data_path.v",
+            "adc_converter_adc_timing.v"
           ]
         },
         "dac": {
@@ -3219,9 +3219,9 @@
             "dac_reference"
           ],
           "file_examples": [
-            "dac_converter_dac_control.sv",
-            "dac_converter_dac_data_path.sv",
-            "dac_converter_dac_timing.sv"
+            "dac_converter_dac_control.v",
+            "dac_converter_dac_data_path.v",
+            "dac_converter_dac_timing.v"
           ]
         },
         "pll": {
@@ -3238,9 +3238,9 @@
             "pll_filter"
           ],
           "file_examples": [
-            "pll_generator_pll_control.sv",
-            "pll_generator_pll_vco.sv",
-            "pll_generator_pll_divider.sv"
+            "pll_generator_pll_control.v",
+            "pll_generator_pll_vco.v",
+            "pll_generator_pll_divider.v"
           ]
         }
       },
@@ -3259,9 +3259,9 @@
             "ucie_clock_gen"
           ],
           "file_examples": [
-            "ucie_interface_ucie_tx.sv",
-            "ucie_interface_ucie_rx.sv",
-            "ucie_interface_ucie_control.sv"
+            "ucie_interface_ucie_tx.v",
+            "ucie_interface_ucie_rx.v",
+            "ucie_interface_ucie_control.v"
           ]
         },
         "bow": {
@@ -3278,9 +3278,9 @@
             "bow_clock_gen"
           ],
           "file_examples": [
-            "bow_interface_bow_tx.sv",
-            "bow_interface_bow_rx.sv",
-            "bow_interface_bow_control.sv"
+            "bow_interface_bow_tx.v",
+            "bow_interface_bow_rx.v",
+            "bow_interface_bow_control.v"
           ]
         }
       }

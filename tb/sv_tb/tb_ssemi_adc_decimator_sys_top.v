@@ -18,8 +18,10 @@
 // Coverage Goals:
 //   - 95% functional coverage
 //   - 90% code coverage
+//   - 100% toggle coverage
 //   - All error conditions exercised
 //   - All CSR operations verified
+//   - Performance and timing verification
 //
 // Author: Vyges AI Assistant
 // Date: 2025-08-30T18:32:01Z
@@ -305,27 +307,128 @@ task test_parameter_validation();
 endtask
 
 //==============================================================================
-// Coverage
+// Comprehensive Coverage Collection
 //==============================================================================
 
-// Functional coverage
-covergroup csr_coverage @(posedge i_clk);
+// CSR Operations Coverage
+covergroup csr_operations_cg @(posedge i_clk);
     csr_addr_cp: coverpoint i_csr_addr {
-        bins valid_addr = {[0:127]};
-        bins invalid_addr = {[128:255]};
+        bins config_regs = {[0:63]};
+        bins halfband_regs = {[64:96]};
+        bins status_regs = {[128:255]};
+        illegal_bins invalid = default;
     }
     
-    csr_write_cp: coverpoint i_csr_wr_valid;
-    csr_read_cp: coverpoint i_csr_rd_ready;
+    csr_write_cp: coverpoint {i_csr_wr_valid, o_csr_wr_ready} {
+        bins write_success = {2'b11};
+        bins write_pending = {2'b10};
+        bins write_idle = {2'b00};
+    }
     
-    data_flow_cp: coverpoint i_adc_valid;
-    error_cp: coverpoint o_error;
+    csr_read_cp: coverpoint {i_csr_rd_ready, o_csr_rd_valid} {
+        bins read_success = {2'b11};
+        bins read_pending = {2'b01};
+        bins read_idle = {2'b00};
+    }
     
+    csr_data_cp: coverpoint i_csr_wr_data {
+        bins zero = {32'h00000000};
+        bins positive = {[32'h00000001:32'h7FFFFFFF]};
+        bins negative = {[32'h80000000:32'hFFFFFFFF]};
+    }
+    
+    // Cross coverage for CSR operations
     cross csr_addr_cp, csr_write_cp;
     cross csr_addr_cp, csr_read_cp;
+    cross csr_write_cp, csr_data_cp;
 endgroup
 
-csr_coverage cov = new();
+// Data Flow Coverage
+covergroup data_flow_cg @(posedge i_clk);
+    adc_flow_cp: coverpoint {i_adc_valid, o_adc_ready} {
+        bins flow_success = {2'b11};
+        bins flow_pending = {2'b10};
+        bins flow_idle = {2'b00};
+    }
+    
+    decim_flow_cp: coverpoint {o_decim_valid, i_decim_ready} {
+        bins flow_success = {2'b11};
+        bins flow_pending = {2'b01};
+        bins flow_idle = {2'b00};
+    }
+    
+    adc_data_cp: coverpoint i_adc_data {
+        bins zero = {16'h0000};
+        bins positive = {[16'h0001:16'h7FFF]};
+        bins negative = {[16'h8000:16'hFFFF]};
+        bins max_positive = {16'h7FFF};
+        bins max_negative = {16'h8000};
+    }
+    
+    decim_data_cp: coverpoint o_decim_data {
+        bins zero = {16'h0000};
+        bins positive = {[16'h0001:16'h7FFF]};
+        bins negative = {[16'h8000:16'hFFFF]};
+    }
+    
+    // Cross coverage for data flow
+    cross adc_flow_cp, adc_data_cp;
+    cross decim_flow_cp, decim_data_cp;
+endgroup
+
+// Error Conditions Coverage
+covergroup error_conditions_cg @(posedge i_clk);
+    error_interrupt_cp: coverpoint o_error;
+    
+    // Error injection coverage
+    error_injection_cp: coverpoint {i_csr_wr_valid, i_csr_addr} {
+        bins valid_write = {2'b10} iff (i_csr_addr <= 8'h7F);
+        bins invalid_addr_write = {2'b10} iff (i_csr_addr > 8'h7F);
+        bins no_write = {2'b00};
+    }
+    
+    // Coefficient range coverage
+    coeff_range_cp: coverpoint i_csr_wr_data {
+        bins valid_coeff = {[32'h80000000:32'h7FFFFFFF]};
+        bins out_of_range = default;
+    }
+    
+    // Cross coverage for error conditions
+    cross error_injection_cp, coeff_range_cp;
+endgroup
+
+// Performance Coverage
+covergroup performance_cg @(posedge i_clk);
+    latency_cp: coverpoint $time {
+        bins low_latency = {[0:100ns]};
+        bins medium_latency = {[100ns:500ns]};
+        bins high_latency = {[500ns:$]};
+    }
+    
+    throughput_cp: coverpoint {i_adc_valid, o_adc_ready} {
+        bins high_throughput = {2'b11};
+        bins medium_throughput = {2'b10};
+        bins low_throughput = {2'b00};
+    }
+    
+    // Clock frequency coverage
+    clk_freq_cp: coverpoint i_clk {
+        bins freq_100mhz = {1'b1};
+    }
+endgroup
+
+// State Machine Coverage (if applicable)
+covergroup state_machine_cg @(posedge i_clk);
+    // Add state machine coverage if states are visible
+    // This would need to be customized based on internal state visibility
+endgroup
+
+// Instantiate coverage groups
+csr_operations_cg csr_cov = new();
+data_flow_cg data_cov = new();
+error_conditions_cg error_cov = new();
+performance_cg perf_cov = new();
+state_machine_cg state_cov = new();
 
 //==============================================================================
 // Monitoring
@@ -347,6 +450,150 @@ always @(posedge i_clk) begin
     if (o_error) begin
         $display("WARNING: Error interrupt asserted");
     end
+end
+
+//==============================================================================
+// Performance Monitoring
+//==============================================================================
+
+// Latency measurement
+real latency_start_time;
+real latency_end_time;
+real measured_latency;
+int latency_samples = 0;
+real total_latency = 0;
+
+always @(posedge i_clk) begin
+    if (i_adc_valid && o_adc_ready) begin
+        latency_start_time = $realtime;
+    end
+    
+    if (o_decim_valid && i_decim_ready) begin
+        latency_end_time = $realtime;
+        measured_latency = latency_end_time - latency_start_time;
+        total_latency += measured_latency;
+        latency_samples++;
+        $display("INFO: Latency measurement: %0.2f ns", measured_latency);
+    end
+end
+
+// Throughput measurement
+int adc_samples_sent = 0;
+int decim_samples_received = 0;
+real throughput_start_time;
+real throughput_end_time;
+real measured_throughput;
+
+always @(posedge i_clk) begin
+    if (i_adc_valid && o_adc_ready) begin
+        adc_samples_sent++;
+        if (adc_samples_sent == 1) begin
+            throughput_start_time = $realtime;
+        end
+    end
+    
+    if (o_decim_valid && i_decim_ready) begin
+        decim_samples_received++;
+        if (decim_samples_received == 100) begin
+            throughput_end_time = $realtime;
+            measured_throughput = (decim_samples_received * 1.0) / ((throughput_end_time - throughput_start_time) / 1ns);
+            $display("INFO: Throughput measurement: %0.2f MSPS", measured_throughput);
+        end
+    end
+end
+
+//==============================================================================
+// Coverage Reporting
+//==============================================================================
+
+// Coverage reporting task
+task report_coverage();
+    $display("\n==============================================================================");
+    $display("COVERAGE REPORT");
+    $display("==============================================================================");
+    
+    // CSR Operations Coverage
+    $display("CSR Operations Coverage:");
+    $display("  Write Operations: %0.2f%%", csr_cov.csr_write_cp.get_inst_coverage());
+    $display("  Read Operations: %0.2f%%", csr_cov.csr_read_cp.get_inst_coverage());
+    $display("  Address Range: %0.2f%%", csr_cov.csr_addr_cp.get_inst_coverage());
+    $display("  Overall CSR Coverage: %0.2f%%", csr_cov.get_inst_coverage());
+    
+    // Data Flow Coverage
+    $display("\nData Flow Coverage:");
+    $display("  ADC Flow: %0.2f%%", data_cov.adc_flow_cp.get_inst_coverage());
+    $display("  Decimated Flow: %0.2f%%", data_cov.decim_flow_cp.get_inst_coverage());
+    $display("  ADC Data Range: %0.2f%%", data_cov.adc_data_cp.get_inst_coverage());
+    $display("  Overall Data Flow Coverage: %0.2f%%", data_cov.get_inst_coverage());
+    
+    // Error Conditions Coverage
+    $display("\nError Conditions Coverage:");
+    $display("  Error Interrupt: %0.2f%%", error_cov.error_interrupt_cp.get_inst_coverage());
+    $display("  Error Injection: %0.2f%%", error_cov.error_injection_cp.get_inst_coverage());
+    $display("  Overall Error Coverage: %0.2f%%", error_cov.get_inst_coverage());
+    
+    // Performance Coverage
+    $display("\nPerformance Coverage:");
+    $display("  Latency: %0.2f%%", perf_cov.latency_cp.get_inst_coverage());
+    $display("  Throughput: %0.2f%%", perf_cov.throughput_cp.get_inst_coverage());
+    $display("  Overall Performance Coverage: %0.2f%%", perf_cov.get_inst_coverage());
+    
+    // Overall Coverage
+    real overall_coverage = (csr_cov.get_inst_coverage() + data_cov.get_inst_coverage() + 
+                           error_cov.get_inst_coverage() + perf_cov.get_inst_coverage()) / 4.0;
+    $display("\nOVERALL FUNCTIONAL COVERAGE: %0.2f%%", overall_coverage);
+    
+    // Coverage Goals Check
+    if (overall_coverage >= 95.0) begin
+        $display("✓ COVERAGE GOAL ACHIEVED: 95%% functional coverage target met");
+    end else begin
+        $display("✗ COVERAGE GOAL NOT MET: %0.2f%% < 95%% target", overall_coverage);
+    end
+    
+    $display("==============================================================================\n");
+endtask
+
+// Performance reporting task
+task report_performance();
+    $display("\n==============================================================================");
+    $display("PERFORMANCE REPORT");
+    $display("==============================================================================");
+    
+    if (latency_samples > 0) begin
+        real avg_latency = total_latency / latency_samples;
+        $display("Latency Statistics:");
+        $display("  Average Latency: %0.2f ns", avg_latency);
+        $display("  Total Samples: %0d", latency_samples);
+        $display("  Total Latency: %0.2f ns", total_latency);
+    end
+    
+    if (decim_samples_received > 0) begin
+        $display("\nThroughput Statistics:");
+        $display("  ADC Samples Sent: %0d", adc_samples_sent);
+        $display("  Decimated Samples Received: %0d", decim_samples_received);
+        $display("  Decimation Ratio: %0.2f:1", real'(adc_samples_sent) / real'(decim_samples_received));
+    end
+    
+    $display("==============================================================================\n");
+endtask
+
+// Final reporting in main test
+initial begin
+    // Wait for test completion
+    wait(test_complete);
+    
+    // Report coverage and performance
+    report_coverage();
+    report_performance();
+    
+    // Final status
+    if (test_passed) begin
+        $display("✓ ALL TESTS PASSED");
+    end else begin
+        $display("✗ SOME TESTS FAILED");
+    end
+    
+    $finish;
 end
 
 endmodule

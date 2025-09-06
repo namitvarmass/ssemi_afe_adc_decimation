@@ -54,13 +54,13 @@ module ssemi_adc_decimator_config_status_regs #(
     
     // CSR Write Interface
     input  wire i_csr_wr_valid,  // Write valid
-    input  wire [7:0] i_csr_addr, // Write address
+    input  wire [7:0] i_csr_addr, // CSR address (shared between read and write)
     input  wire [31:0] i_csr_wr_data, // Write data
     output reg  o_csr_wr_ready,  // Write ready
     
     // CSR Read Interface
     input  wire i_csr_rd_ready,  // Read ready (host ready to accept)
-    input  wire [7:0] i_csr_addr, // Read address (shared with write)
+    // Note: i_csr_addr is shared between read and write interfaces (declared above)
     output reg  [31:0] o_csr_rd_data, // Read data
     output reg  o_csr_rd_valid,  // Read valid
     
@@ -120,7 +120,7 @@ module ssemi_adc_decimator_config_status_regs #(
     wire invalid_write_addr;
     
     // Parameter validation (verification only)
-`ifdef SSEMI_VERIFICATION
+`ifdef SSEMI_ADC_DECIMATOR_VERIFICATION
     initial begin
         // Comprehensive parameter validation with detailed error messages
         if (FIR_TAPS < 4 || FIR_TAPS > 256) begin
@@ -209,105 +209,105 @@ module ssemi_adc_decimator_config_status_regs #(
         if (!i_rst_n) begin
             // Initialize all configuration registers to default values
             // Load default FIR coefficients
-            config_reg[0] <= `SSEMI_DEFAULT_FIR_COEFF_0;
-            config_reg[1] <= `SSEMI_DEFAULT_FIR_COEFF_1;
-            config_reg[2] <= `SSEMI_DEFAULT_FIR_COEFF_2;
-            config_reg[3] <= `SSEMI_DEFAULT_FIR_COEFF_3;
-            config_reg[4] <= `SSEMI_DEFAULT_FIR_COEFF_4;
-            config_reg[5] <= `SSEMI_DEFAULT_FIR_COEFF_5;
-            config_reg[6] <= `SSEMI_DEFAULT_FIR_COEFF_6;
-            config_reg[7] <= `SSEMI_DEFAULT_FIR_COEFF_7;
-            config_reg[8] <= `SSEMI_DEFAULT_FIR_COEFF_8;
-            config_reg[9] <= `SSEMI_DEFAULT_FIR_COEFF_9;
-            config_reg[10] <= `SSEMI_DEFAULT_FIR_COEFF_10;
-            config_reg[11] <= `SSEMI_DEFAULT_FIR_COEFF_11;
-            config_reg[12] <= `SSEMI_DEFAULT_FIR_COEFF_12;
-            config_reg[13] <= `SSEMI_DEFAULT_FIR_COEFF_13;
-            config_reg[14] <= `SSEMI_DEFAULT_FIR_COEFF_14;
-            config_reg[15] <= `SSEMI_DEFAULT_FIR_COEFF_15;
-            config_reg[16] <= `SSEMI_DEFAULT_FIR_COEFF_16;
-            config_reg[17] <= `SSEMI_DEFAULT_FIR_COEFF_17;
-            config_reg[18] <= `SSEMI_DEFAULT_FIR_COEFF_18;
-            config_reg[19] <= `SSEMI_DEFAULT_FIR_COEFF_19;
-            config_reg[20] <= `SSEMI_DEFAULT_FIR_COEFF_20;
-            config_reg[21] <= `SSEMI_DEFAULT_FIR_COEFF_21;
-            config_reg[22] <= `SSEMI_DEFAULT_FIR_COEFF_22;
-            config_reg[23] <= `SSEMI_DEFAULT_FIR_COEFF_23;
-            config_reg[24] <= `SSEMI_DEFAULT_FIR_COEFF_24;
-            config_reg[25] <= `SSEMI_DEFAULT_FIR_COEFF_25;
-            config_reg[26] <= `SSEMI_DEFAULT_FIR_COEFF_26;
-            config_reg[27] <= `SSEMI_DEFAULT_FIR_COEFF_27;
-            config_reg[28] <= `SSEMI_DEFAULT_FIR_COEFF_28;
-            config_reg[29] <= `SSEMI_DEFAULT_FIR_COEFF_29;
-            config_reg[30] <= `SSEMI_DEFAULT_FIR_COEFF_30;
-            config_reg[31] <= `SSEMI_DEFAULT_FIR_COEFF_31;
-            config_reg[32] <= `SSEMI_DEFAULT_FIR_COEFF_32;
-            config_reg[33] <= `SSEMI_DEFAULT_FIR_COEFF_33;
-            config_reg[34] <= `SSEMI_DEFAULT_FIR_COEFF_34;
-            config_reg[35] <= `SSEMI_DEFAULT_FIR_COEFF_35;
-            config_reg[36] <= `SSEMI_DEFAULT_FIR_COEFF_36;
-            config_reg[37] <= `SSEMI_DEFAULT_FIR_COEFF_37;
-            config_reg[38] <= `SSEMI_DEFAULT_FIR_COEFF_38;
-            config_reg[39] <= `SSEMI_DEFAULT_FIR_COEFF_39;
-            config_reg[40] <= `SSEMI_DEFAULT_FIR_COEFF_40;
-            config_reg[41] <= `SSEMI_DEFAULT_FIR_COEFF_41;
-            config_reg[42] <= `SSEMI_DEFAULT_FIR_COEFF_42;
-            config_reg[43] <= `SSEMI_DEFAULT_FIR_COEFF_43;
-            config_reg[44] <= `SSEMI_DEFAULT_FIR_COEFF_44;
-            config_reg[45] <= `SSEMI_DEFAULT_FIR_COEFF_45;
-            config_reg[46] <= `SSEMI_DEFAULT_FIR_COEFF_46;
-            config_reg[47] <= `SSEMI_DEFAULT_FIR_COEFF_47;
-            config_reg[48] <= `SSEMI_DEFAULT_FIR_COEFF_48;
-            config_reg[49] <= `SSEMI_DEFAULT_FIR_COEFF_49;
-            config_reg[50] <= `SSEMI_DEFAULT_FIR_COEFF_50;
-            config_reg[51] <= `SSEMI_DEFAULT_FIR_COEFF_51;
-            config_reg[52] <= `SSEMI_DEFAULT_FIR_COEFF_52;
-            config_reg[53] <= `SSEMI_DEFAULT_FIR_COEFF_53;
-            config_reg[54] <= `SSEMI_DEFAULT_FIR_COEFF_54;
-            config_reg[55] <= `SSEMI_DEFAULT_FIR_COEFF_55;
-            config_reg[56] <= `SSEMI_DEFAULT_FIR_COEFF_56;
-            config_reg[57] <= `SSEMI_DEFAULT_FIR_COEFF_57;
-            config_reg[58] <= `SSEMI_DEFAULT_FIR_COEFF_58;
-            config_reg[59] <= `SSEMI_DEFAULT_FIR_COEFF_59;
-            config_reg[60] <= `SSEMI_DEFAULT_FIR_COEFF_60;
-            config_reg[61] <= `SSEMI_DEFAULT_FIR_COEFF_61;
-            config_reg[62] <= `SSEMI_DEFAULT_FIR_COEFF_62;
-            config_reg[63] <= `SSEMI_DEFAULT_FIR_COEFF_63;
+            config_reg[0] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_0;
+            config_reg[1] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_1;
+            config_reg[2] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_2;
+            config_reg[3] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_3;
+            config_reg[4] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_4;
+            config_reg[5] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_5;
+            config_reg[6] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_6;
+            config_reg[7] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_7;
+            config_reg[8] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_8;
+            config_reg[9] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_9;
+            config_reg[10] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_10;
+            config_reg[11] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_11;
+            config_reg[12] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_12;
+            config_reg[13] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_13;
+            config_reg[14] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_14;
+            config_reg[15] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_15;
+            config_reg[16] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_16;
+            config_reg[17] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_17;
+            config_reg[18] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_18;
+            config_reg[19] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_19;
+            config_reg[20] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_20;
+            config_reg[21] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_21;
+            config_reg[22] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_22;
+            config_reg[23] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_23;
+            config_reg[24] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_24;
+            config_reg[25] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_25;
+            config_reg[26] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_26;
+            config_reg[27] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_27;
+            config_reg[28] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_28;
+            config_reg[29] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_29;
+            config_reg[30] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_30;
+            config_reg[31] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_31;
+            config_reg[32] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_32;
+            config_reg[33] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_33;
+            config_reg[34] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_34;
+            config_reg[35] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_35;
+            config_reg[36] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_36;
+            config_reg[37] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_37;
+            config_reg[38] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_38;
+            config_reg[39] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_39;
+            config_reg[40] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_40;
+            config_reg[41] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_41;
+            config_reg[42] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_42;
+            config_reg[43] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_43;
+            config_reg[44] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_44;
+            config_reg[45] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_45;
+            config_reg[46] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_46;
+            config_reg[47] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_47;
+            config_reg[48] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_48;
+            config_reg[49] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_49;
+            config_reg[50] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_50;
+            config_reg[51] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_51;
+            config_reg[52] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_52;
+            config_reg[53] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_53;
+            config_reg[54] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_54;
+            config_reg[55] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_55;
+            config_reg[56] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_56;
+            config_reg[57] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_57;
+            config_reg[58] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_58;
+            config_reg[59] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_59;
+            config_reg[60] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_60;
+            config_reg[61] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_61;
+            config_reg[62] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_62;
+            config_reg[63] <= `SSEMI_ADC_DECIMATOR_DEFAULT_FIR_COEFF_63;
             
             // Load default halfband coefficients
-            config_reg[64] <= `SSEMI_DEFAULT_HALFBAND_COEFF_0;
-            config_reg[65] <= `SSEMI_DEFAULT_HALFBAND_COEFF_1;
-            config_reg[66] <= `SSEMI_DEFAULT_HALFBAND_COEFF_2;
-            config_reg[67] <= `SSEMI_DEFAULT_HALFBAND_COEFF_3;
-            config_reg[68] <= `SSEMI_DEFAULT_HALFBAND_COEFF_4;
-            config_reg[69] <= `SSEMI_DEFAULT_HALFBAND_COEFF_5;
-            config_reg[70] <= `SSEMI_DEFAULT_HALFBAND_COEFF_6;
-            config_reg[71] <= `SSEMI_DEFAULT_HALFBAND_COEFF_7;
-            config_reg[72] <= `SSEMI_DEFAULT_HALFBAND_COEFF_8;
-            config_reg[73] <= `SSEMI_DEFAULT_HALFBAND_COEFF_9;
-            config_reg[74] <= `SSEMI_DEFAULT_HALFBAND_COEFF_10;
-            config_reg[75] <= `SSEMI_DEFAULT_HALFBAND_COEFF_11;
-            config_reg[76] <= `SSEMI_DEFAULT_HALFBAND_COEFF_12;
-            config_reg[77] <= `SSEMI_DEFAULT_HALFBAND_COEFF_13;
-            config_reg[78] <= `SSEMI_DEFAULT_HALFBAND_COEFF_14;
-            config_reg[79] <= `SSEMI_DEFAULT_HALFBAND_COEFF_15;
-            config_reg[80] <= `SSEMI_DEFAULT_HALFBAND_COEFF_16;
-            config_reg[81] <= `SSEMI_DEFAULT_HALFBAND_COEFF_17;
-            config_reg[82] <= `SSEMI_DEFAULT_HALFBAND_COEFF_18;
-            config_reg[83] <= `SSEMI_DEFAULT_HALFBAND_COEFF_19;
-            config_reg[84] <= `SSEMI_DEFAULT_HALFBAND_COEFF_20;
-            config_reg[85] <= `SSEMI_DEFAULT_HALFBAND_COEFF_21;
-            config_reg[86] <= `SSEMI_DEFAULT_HALFBAND_COEFF_22;
-            config_reg[87] <= `SSEMI_DEFAULT_HALFBAND_COEFF_23;
-            config_reg[88] <= `SSEMI_DEFAULT_HALFBAND_COEFF_24;
-            config_reg[89] <= `SSEMI_DEFAULT_HALFBAND_COEFF_25;
-            config_reg[90] <= `SSEMI_DEFAULT_HALFBAND_COEFF_26;
-            config_reg[91] <= `SSEMI_DEFAULT_HALFBAND_COEFF_27;
-            config_reg[92] <= `SSEMI_DEFAULT_HALFBAND_COEFF_28;
-            config_reg[93] <= `SSEMI_DEFAULT_HALFBAND_COEFF_29;
-            config_reg[94] <= `SSEMI_DEFAULT_HALFBAND_COEFF_30;
-            config_reg[95] <= `SSEMI_DEFAULT_HALFBAND_COEFF_31;
-            config_reg[96] <= `SSEMI_DEFAULT_HALFBAND_COEFF_32;
+            config_reg[64] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_0;
+            config_reg[65] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_1;
+            config_reg[66] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_2;
+            config_reg[67] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_3;
+            config_reg[68] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_4;
+            config_reg[69] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_5;
+            config_reg[70] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_6;
+            config_reg[71] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_7;
+            config_reg[72] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_8;
+            config_reg[73] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_9;
+            config_reg[74] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_10;
+            config_reg[75] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_11;
+            config_reg[76] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_12;
+            config_reg[77] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_13;
+            config_reg[78] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_14;
+            config_reg[79] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_15;
+            config_reg[80] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_16;
+            config_reg[81] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_17;
+            config_reg[82] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_18;
+            config_reg[83] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_19;
+            config_reg[84] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_20;
+            config_reg[85] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_21;
+            config_reg[86] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_22;
+            config_reg[87] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_23;
+            config_reg[88] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_24;
+            config_reg[89] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_25;
+            config_reg[90] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_26;
+            config_reg[91] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_27;
+            config_reg[92] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_28;
+            config_reg[93] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_29;
+            config_reg[94] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_30;
+            config_reg[95] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_31;
+            config_reg[96] <= `SSEMI_ADC_DECIMATOR_DEFAULT_HALFBAND_COEFF_32;
             
                  end else if (i_csr_wr_valid && o_csr_wr_ready) begin
              // Validate address range and write if valid

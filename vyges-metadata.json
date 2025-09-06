@@ -10,7 +10,7 @@
   "design_type": ["digital"],
   "maturity": "prototype",
   "created": "2025-08-28T13:41:48Z",
-  "updated": "2025-08-30T18:32:01Z",
+  "updated": "2025-09-06T07:49:10Z",
   "source": {
     "type": "git",
     "url": "https://github.com/namitvarmass/ssemi_afe_adc_decimation",
